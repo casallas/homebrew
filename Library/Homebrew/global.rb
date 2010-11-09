@@ -15,7 +15,7 @@ HOMEBREW_GIT_USER = 'rubiojr'
 HOMEBREW_GIT_BRANCH = 'master'
 
 if SystemCommand.platform == :mac
-  if Process.uid == 0
+  HOMEBREW_CACHE = if Process.uid == 0
     # technically this is not the correct place, this cache is for *all users*
     # so in that case, maybe we should always use it, root or not?
     HOMEBREW_CACHE=Pathname.new("/Library/Caches/Homebrew")
@@ -35,10 +35,10 @@ HOMEBREW_REPOSITORY = Pathname.new(HOMEBREW_BREW_FILE).realpath.dirname.parent #
 
 # Where we store built products; /usr/local/Cellar if it exists,
 # otherwise a Cellar relative to the Repository.
-if (HOMEBREW_PREFIX+'Cellar').exist?
-  HOMEBREW_CELLAR = HOMEBREW_PREFIX+'Cellar'
+HOMEBREW_CELLAR = if (HOMEBREW_PREFIX/"Cellar").exist?
+  HOMEBREW_PREFIX/"Cellar"
 else
-  HOMEBREW_CELLAR = HOMEBREW_REPOSITORY+'Cellar'
+  HOMEBREW_REPOSITORY/"Cellar"
 end
 
 if SystemCommand.platform == :mac
