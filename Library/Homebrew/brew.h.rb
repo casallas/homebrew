@@ -1,5 +1,5 @@
 FORMULA_META_FILES = %w[README README.md ChangeLog COPYING LICENSE LICENCE COPYRIGHT AUTHORS]
-PLEASE_REPORT_BUG = "#{Tty.white}Please report this bug at #{Tty.em}\n#{HOMEBREW_GIT_URL}/issues#{Tty.reset}"
+PLEASE_REPORT_BUG = "#{Tty.white}Please follow the instructions to report this bug at #{Tty.em}#{HOMEBREW_GIT_URL}/wiki/new-issue#{Tty.reset}"
 
 def check_for_blacklisted_formula names
   return if ARGV.force?
