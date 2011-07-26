@@ -16,6 +16,10 @@ class Git < Formula
   homepage 'http://git-scm.com'
   depends_on 'expat'
 
+  def options
+    [['--with-blk-sha1', 'compile with the optimized SHA1 implementation']]
+  end
+
   def install
     # If these things are installed, tell Git build system to not use them
     ENV['NO_FINK']='1'
@@ -24,6 +28,8 @@ class Git < Formula
     ENV['PERL_MM_OPT']=''
     # Build verbosely.
     ENV['V']='1'
+
+    ENV['BLK_SHA1']='YesPlease' if ARGV.include? '--with-blk-sha1'
 
     inreplace "Makefile" do |s|
       s.remove_make_var! %w{CFLAGS LDFLAGS}
