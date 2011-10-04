@@ -1,8 +1,10 @@
 require 'formula'
 
 class Openscenegraph < Formula
-  url 'http://www.openscenegraph.org/svn/osg/OpenSceneGraph/tags/OpenSceneGraph-2.8.5/', :using => :svn
-  version '2.8.5'
+  url 'http://www.openscenegraph.org/downloads/stable_releases/OpenSceneGraph-3.0.1/source/OpenSceneGraph-3.0.1.zip'
+  md5 'c43a25d023e635c3566b2083d8e6d956'
+  head 'http://www.openscenegraph.org/svn/osg/OpenSceneGraph/trunk/'
+  version '3.0.1'
   homepage 'http://www.openscenegraph.org/'
 
   depends_on 'cmake'
