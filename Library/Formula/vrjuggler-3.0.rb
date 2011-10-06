@@ -3,8 +3,7 @@ require 'formula'
 class Vrjuggler30 <Formula
   head 'http://vrjuggler.googlecode.com/svn/juggler/branches/3.0/'
   homepage 'http://code.google.com/p/vrjuggler/'
-  url 'http://vrjuggler.googlecode.com/files/vrjuggler-3.0.0-1-src.tar.bz2'
-  sha1 '80d724b88afe0820a8eda9f293729eb050182830'
+  url 'http://vrjuggler.googlecode.com/svn/juggler/branches/3.0/'
   version '3.0.0-1'
 
   depends_on 'boost'
