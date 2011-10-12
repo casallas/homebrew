@@ -12,17 +12,7 @@ module Homebrew extend self
 end
 
 class RefreshBrew
-<<<<<<< HEAD
-  RPAVLIK_REPO_URL = "http://github.com/rpavlik/homebrew.git"
-  REPOSITORY_URL   = "http://github.com/mxcl/homebrew.git"
-  CHECKOUT_COMMAND = "git checkout -q master"
-  UPDATE_COMMAND   = "git pull #{RPAVLIK_REPO_URL} master; git pull #{REPOSITORY_URL} master"
-  REVISION_COMMAND = "git rev-parse HEAD"
-  DIFF_COMMAND     = "git diff-tree -r --name-status -z %s %s"
-
-=======
   REPOSITORY_URL = "https://github.com/mxcl/homebrew.git"
->>>>>>> origin/master
   FORMULA_DIR = 'Library/Formula/'
   EXAMPLE_DIR = 'Library/Contributions/examples/'
 
