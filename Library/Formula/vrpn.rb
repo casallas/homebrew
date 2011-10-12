@@ -1,9 +1,10 @@
 require 'formula'
 
 class Vrpn < Formula
-  url 'git://git.cs.unc.edu/vrpn.git', :tag => 'version_07.28'
-  head 'git://github.com/rpavlik/vrpn.git'
-  version '07.28'
+  url 'ftp://ftp.cs.unc.edu/pub/packages/GRIP/vrpn/vrpn_07_29.zip'
+  md5 '422f13fc9cbb62d36c96f3cc3b06cec9'
+  head 'git://git.cs.unc.edu/vrpn.git'
+  version '07.29'
   homepage 'http://vrpn.org'
 
   depends_on 'libusb' # for HID support
