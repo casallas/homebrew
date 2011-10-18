@@ -1,9 +1,9 @@
 require 'formula'
 
 class Wv < Formula
-  url 'http://abisource.com/downloads/wv/1.2.7/wv-1.2.7.tar.gz'
+  url 'http://www.abisource.com/downloads/wv/1.2.4/wv-1.2.4.tar.gz'
   homepage 'http://wvware.sourceforge.net/'
-  sha256 'a3a367062e894770fc3ef63bbf7e285cb025253f972fa899c16931f741e856ea'
+  md5 'c1861c560491f121e12917fa76970ac5'
 
   depends_on 'glib'
   depends_on 'libgsf'
@@ -20,3 +20,4 @@ class Wv < Formula
     system "make install"
   end
 end
+
