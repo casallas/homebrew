@@ -1,11 +1,11 @@
 require 'formula'
 
 class Osgworks < Formula
-  url 'http://osgworks.googlecode.com/files/osgWorks_01_01_00.tar.gz'
-  sha1 '1b50d29b5dcad6335c16d0db28f1bfaef07fcf74'
+  url 'http://osgworks.googlecode.com/files/osgWorks_02_00_00-rc1.zip'
+  sha1 '04c2dcc60bdd0a11c55545c686e868a2f43b910c'
   head 'http://osgworks.googlecode.com/svn/trunk/'
   homepage 'http://code.google.com/p/osgworks/'
-  version '1.1'
+  version '2.0RC1'
 
   depends_on 'cmake'
   depends_on 'openscenegraph'
@@ -15,11 +15,11 @@ class Osgworks < Formula
     system "make install"
   end
 
-  def patches
+  #def patches
     # openscenegraph 3 changed DisplaySettings::instance, thus we need to patch CameraConfigObject.cpp
     # This should be solved in osgWorks' HEAD (2.0 RC1)
-    return DATA unless ARGV.build_head?
-  end
+    #return DATA unless ARGV.build_head?
+  #end
  
 end
 
