@@ -36,7 +36,7 @@ class Cppcheck < Formula
       else
         system "qmake"
       end
-      
+
       system "make"
       bin.install "cppcheck-gui.app"
     end
