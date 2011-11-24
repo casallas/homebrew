@@ -28,6 +28,6 @@ Also note that you need to execute pygtk apps using the X11 terminal.
   end
 
   def test
-    system "xinit pygtk-demo"
+    system "xterm pygtk-demo"
   end
 end
