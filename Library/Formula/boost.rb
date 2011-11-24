@@ -18,6 +18,18 @@ class Boost < Formula
     DATA
   end
 
+  def patches
+    # https://svn.boost.org/trac/boost/ticket/6131
+    #
+    # #define foreach BOOST_FOREACH causes weird compile error in certain
+    # circumstances with boost 1.48
+    #
+    # #define foreach BOOST_FOREACH causes compile error "'boost::BOOST_FOREACH'
+    # has not been declared" on its line if it appears after #include
+    # <boost/foreach.hpp> and before certain other boost headers.
+    DATA
+  end
+
   def options
     [
       ["--with-mpi", "Enable MPI support"],
