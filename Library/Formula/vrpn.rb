@@ -9,10 +9,12 @@ class Vrpn < Formula
   depends_on 'libusb' # for HID support
   depends_on 'cmake' => :build
   depends_on 'doxygen' if ARGV.include? '--docs'
+  depends_on 'wiiuse' if ARGV.include? '--with-wiiuse'
 
   def options
     [
       ['--clients', 'Build client apps and tests.'],
+      ['--with-wiiuse', 'Build with wiiuse library support, this makes the server GPL'],
       ['--docs', 'Build doxygen-based API documentation']
     ]
   end
@@ -24,6 +26,18 @@ class Vrpn < Formula
       args << "-DVRPN_BUILD_CLIENTS:BOOL=ON"
     else
       args << "-DVRPN_BUILD_CLIENTS:BOOL=OFF"
+    end
+
+    if ARGV.include? '--with-wiiuse'
+      args << "-DVRPN_USE_WIIUSE:BOOL=ON"
+      # Using the wiiuse library makes a GPL server
+      # so we need to set this to true (see caveats)
+      args << "-DVRPN_GPL_SERVER:BOOL=ON"
+    else
+      # Just in case wiiuse is installed, but the user
+      # doesn't explicitly want to use it with VRPN
+      # (e.g. because of the GPL license)
+      args << "-DVRPN_USE_WIIUSE:BOOL=OFF"
     end
     args << ".."
 
@@ -38,4 +52,13 @@ class Vrpn < Formula
       system "make install"
     end
   end
+
+  def caveats; <<-EOS.undent
+    When using --with-wiiuse your VRPN libraries/binaries may
+    automatically become GPL. If this is unacceptable, don't
+    use that option.
+    "I am not a lawyer, and this is not legal advice!"
+    EOS
+  end
+
 end
