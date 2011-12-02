@@ -16,8 +16,13 @@ class Git < Formula
   homepage 'http://git-scm.com'
   depends_on 'expat'
 
+  depends_on 'pcre' if ARGV.include? '--with-pcre'
+
   def options
-    [['--with-blk-sha1', 'compile with the optimized SHA1 implementation']]
+    [
+      ['--with-blk-sha1', 'compile with the optimized SHA1 implementation'],
+      ['--with-pcre', 'compile with the PCRE library'],
+    ]
   end
 
   def install
@@ -27,6 +32,11 @@ class Git < Formula
     ENV['V']='1' # build verbosely
 
     ENV['BLK_SHA1']='1' if ARGV.include? '--with-blk-sha1'
+
+    if ARGV.include? '--with-pcre'
+      ENV['USE_LIBPCRE']='1'
+      ENV['LIBPCREDIR'] = HOMEBREW_PREFIX
+    end
 
     inreplace "Makefile" do |s|
       s.remove_make_var! %w{CC CFLAGS LDFLAGS}
