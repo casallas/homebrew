@@ -10,6 +10,12 @@ class Osgworks < Formula
   depends_on 'cmake'
   depends_on 'openscenegraph'
 
+  def patches
+    # Declare the isTransparent function before calling it on
+    # the osgwTools::transparentDisable template
+    "https://raw.github.com/gist/1438764/TransparencyUtils.h.diff"
+  end
+
   def install
     system "cmake . #{std_cmake_parameters}"
     system "make install"
