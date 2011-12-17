@@ -31,6 +31,9 @@ class Git < Formula
     ENV['NO_DARWIN_PORTS']='1'
     ENV['V']='1' # build verbosely
 
+    # workaround for users of perlbrew
+    ENV['PERL_PATH'] = `/usr/bin/which perl`.chomp
+
     ENV['BLK_SHA1']='1' if ARGV.include? '--with-blk-sha1'
 
     if ARGV.include? '--with-pcre'
