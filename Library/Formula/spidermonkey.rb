@@ -65,7 +65,7 @@ class Spidermonkey < Formula
   end
 
   def caveats; <<-EOS.undent
-    This formula installs Spidermonkey 1.8.x.
+    This formula installs Spidermonkey 1.8.5.
 
     If you are trying to compile MongoDB from scratch, you will need 1.7.x instead.
     EOS

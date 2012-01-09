@@ -1,9 +1,9 @@
 require 'formula'
 
 class Flusspferd < Formula
-  url 'https://github.com/Flusspferd/flusspferd.git'
+  url 'https://github.com/Flusspferd/flusspferd/tarball/v0.9'
   homepage 'http://flusspferd.github.com/'
-  version '0.9'
+  md5 '8d839b9ab25e1f3fcb9c0e48fb3538b9'
 
   depends_on 'cmake' => :build
   depends_on 'arabica'
