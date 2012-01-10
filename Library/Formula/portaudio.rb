@@ -16,7 +16,13 @@ class Portaudio < Formula
   def install
     ENV.universal_binary if ARGV.build_universal?
 
-    system "./configure", "--prefix=#{prefix}", "--disable-debug", "--disable-dependency-tracking"
+    args = [ "--prefix=#{prefix}",
+             "--disable-debug",
+             "--disable-dependency-tracking",
+             # portaudio builds universal unless told not to
+             "--enable-mac-universal=#{ARGV.build_universal? ? 'yes' : 'no'}" ]
+
+    system "./configure", *args
     system "make install"
 
     # Need 'pa_mac_core.h' to compile PyAudio

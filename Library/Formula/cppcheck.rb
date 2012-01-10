@@ -20,6 +20,8 @@ class Cppcheck < Formula
   skip_clean :all
 
   def install
+    # Man pages aren't installed as they require docbook schemas.
+
     # Pass to make variables.
     if ARGV.include? '--no-rules'
       system "make", "HAVE_RULES=no"
@@ -40,8 +42,8 @@ class Cppcheck < Formula
       system "make"
       bin.install "cppcheck-gui.app"
     end
-    # Man pages aren't installed, they require docbook schemas which I don't know how to install.
   end
+
   def caveats; <<-EOS.undent
     --with-gui installs cppcheck-gui.app in:
       #{bin}
@@ -52,5 +54,4 @@ class Cppcheck < Formula
         ln -s #{bin}/cppcheck-gui.app /Applications
     EOS
   end
-
 end
