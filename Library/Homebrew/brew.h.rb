@@ -280,29 +280,6 @@ rescue
   []
 end
 
-def cleanup name
-  require 'formula'
-
-  f = Formula.factory name
-  formula_cellar = f.prefix.parent
-
-  if f.installed? and formula_cellar.directory?
-    kids = f.prefix.parent.children
-    kids.each do |keg|
-      next if f.installed_prefix == keg
-      print "Uninstalling #{keg}..."
-      FileUtils.rm_rf keg
-      puts
-    end
-  else
-    # If the cellar only has one version installed, don't complain
-    # that we can't tell which one to keep.
-    if formula_cellar.children.length > 1
-      opoo "Skipping #{name}: most recent version #{f.version} not installed"
-    end
-  end
-end
-
 def clean f
   require 'cleaner'
   Cleaner.new f

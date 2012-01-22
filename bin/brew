@@ -194,21 +194,6 @@ begin
         ARGV.formulae.each{ |f| info f }
       end
 
-  when 'cleanup'
-    if ARGV.named.empty?
-      require 'formula'
-      HOMEBREW_CELLAR.children.each do |rack|
-        begin
-          cleanup(rack.basename.to_s) if rack.directory?
-        rescue FormulaUnavailableError => e
-          opoo "Formula not found for #{e.name}"
-        end
-      end
-      prune # seems like a good time to do some additional cleanup
-    else
-      ARGV.named.each { |name| cleanup name}
-    end
-
   when 'install'
     check_for_blacklisted_formula(ARGV.named)
     brew_install
