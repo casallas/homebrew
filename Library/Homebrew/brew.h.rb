@@ -306,15 +306,6 @@ end
 def clean f
   require 'cleaner'
   Cleaner.new f
- 
-  # Hunt for empty folders and nuke them unless they are
-  # protected by f.skip_clean?
-  # We want post-order traversal, so put the dirs in a stack
-  # and then pop them off later.
-  paths = []
-  f.prefix.find do |path|
-    paths << path if path.directory?
-  end
 
   until paths.empty? do
     d = paths.pop
