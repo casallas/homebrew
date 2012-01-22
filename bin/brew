@@ -241,10 +241,6 @@ begin
       puts ARGV.formulae.map {|f| FormulaInstaller.expand_deps(f).map {|f| f.name} }.flatten.uniq.sort
     end
 
-  when 'cat'
-    Dir.chdir HOMEBREW_REPOSITORY
-    exec "cat", ARGV.formulae.first.path, *ARGV.options_only
-
   when 'outdated'
     outdated_brews.each do |keg, name, version|
       if $stdout.tty? and not ARGV.flag? '--quiet'
