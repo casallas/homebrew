@@ -80,12 +80,6 @@ begin
   require 'brew.h'
 
   case arg = ARGV.shift
-  when '--cache'
-    if ARGV.named.empty?
-      puts HOMEBREW_CACHE
-    else
-      puts ARGV.formulae.collect {|f| f.cached_download}
-    end
   when '--prefix'
     if ARGV.named.empty?
       puts HOMEBREW_PREFIX
