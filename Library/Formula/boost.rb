@@ -25,10 +25,11 @@ class Boost < Formula
     ]
   end
 
+  # Fix ENV.make_jobs
   def install
     args = ["--prefix=#{prefix}",
             "--libdir=#{lib}",
-            "-j#{ENV.make_jobs}",
+            #"-j#{ENV.make_jobs}",
             "--layout=tagged",
             "threading=multi",
             "install"]
