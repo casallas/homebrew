@@ -45,9 +45,6 @@ begin
   require 'brew.h'
 
   case arg = ARGV.shift
-  when '--repository'
-    puts HOMEBREW_REPOSITORY
-
     when 'home', 'homepage'
       if ARGV.named.empty?
         exec "open", HOMEBREW_WWW
