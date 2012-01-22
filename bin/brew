@@ -53,12 +53,6 @@ begin
     end
   when '--repository'
     puts HOMEBREW_REPOSITORY
-  when '--env'
-    require 'hardware'
-    require 'extend/ENV'
-    ENV.extend(HomebrewEnvExtension)
-    ENV.setup_build_environment
-    dump_build_env ENV
 
     when 'home', 'homepage'
       if ARGV.named.empty?
@@ -327,7 +321,7 @@ rescue BuildError => e
   puts Homebrew.config_s
   puts
   ohai "Build Flags"
-  dump_build_env e.env
+  Homebrew.dump_build_env e.env
   onoe e
   puts PLEASE_REPORT_BUG
   # this feature can be slow (depends on network conditions and if github is up)
