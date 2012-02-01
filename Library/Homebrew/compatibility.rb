@@ -21,3 +21,8 @@ def macports_or_fink_installed?
     MacOS.macports_or_fink_installed?
   end
 end
+
+def outdated_brews
+  require 'cmd/outdated'
+  Homebrew.outdated_brews
+end
