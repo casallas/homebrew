@@ -1,4 +1,9 @@
 
+# maybe never used by anyone, but alas it must continue to exist
+def versions_of(keg_name)
+  `/bin/ls #{HOMEBREW_CELLAR}/#{keg_name}`.collect { |version| version.strip }.reverse
+end
+
 def dump_config
   require 'cmd/--config'
   Homebrew.__config
