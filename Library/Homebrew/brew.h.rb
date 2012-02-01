@@ -324,28 +324,6 @@ def prune
   end
 end
 
-def search_brews text
-  require "formula"
-
-  return Formula.names if text.to_s.empty?
-
-  rx = if text =~ %r{^/(.*)/$}
-    Regexp.new($1)
-  else
-    /.*#{Regexp.escape text}.*/i
-  end
-
-  aliases = Formula.aliases
-  results = (Formula.names+aliases).grep rx
-
-  # Filter out aliases when the full name was also found
-  results.reject do |alias_name|
-    if aliases.include? alias_name
-      results.include? Formula.resolve_alias(alias_name)
-    end
-  end
-end
-
 def brew_install
   require 'formula_installer'
   require 'hardware'

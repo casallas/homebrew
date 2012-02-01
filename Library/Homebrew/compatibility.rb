@@ -26,3 +26,8 @@ def outdated_brews
   require 'cmd/outdated'
   Homebrew.outdated_brews
 end
+
+def search_brews text
+  require 'cmd/search'
+  Homebrew.search_brews text
+end
