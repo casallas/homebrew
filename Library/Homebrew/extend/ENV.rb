@@ -44,7 +44,8 @@ module HomebrewEnvExtension
     # to use a specific linker. However doing this in general causes formula to
     # build more successfully because we are changing CC and many build systems
     # don't react properly to that.
-    self['LD'] = self['CC']
+    # In linux, this doesn't allow shared libraries to be built correctly
+    self['LD'] = self['CC'] unless SystemCommand.platform == :linux
 
     # optimise all the way to eleven, references:
     # http://en.gentoo-wiki.com/wiki/Safe_Cflags/Intel
