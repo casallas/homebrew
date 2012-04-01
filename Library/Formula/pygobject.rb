@@ -1,22 +1,23 @@
 require 'formula'
 
-class Pygobject <Formula
-  url 'http://ftp.gnome.org/pub/GNOME/sources/pygobject/2.28/pygobject-2.28.4.tar.bz2'
-  homepage 'http://pygtk.org'
-  sha256 '70e3a05dd5f688e68b5dafa2412cd4fdbc0af83792a5752ef6353c4accf2022c'
+class Pygobject < Formula
+  url 'http://ftp.gnome.org/pub/GNOME/sources/pygobject/2.28/pygobject-2.28.6.tar.bz2'
+  homepage 'http://live.gnome.org/PyGObject'
+  md5 'a43d783228dd32899e6908352b8308f3'
 
   depends_on 'pkg-config' => :build
-  depends_on 'glib'
-  depends_on 'pycairo'
+  depends_on 'gobject-introspection'
+  depends_on 'gtk+'
+
+  def options
+    [["--universal", "Builds a universal binary"]]
+  end
 
   def install
-    ENV['FFI_CFLAGS'] = '-I/usr/include/ffi'
-    ENV['FFI_LIBS'] = '-L/usr/lib -lffi'
-    system "./configure", "--prefix=#{prefix}",
-      "--disable-dependency-tracking", "--disable-introspection"
-    inreplace 'pygobject-2.0.pc', 'Requires.private: libffi',
-      'Libs.private: -lffi'
-    inreplace 'pygobject-2.0.pc', 'Cflags: ', 'Cflags: -I/usr/include/ffi '
+    ENV.universal_binary if ARGV.build_universal?
+    system "./configure", "--disable-dependency-tracking",
+                          "--prefix=#{prefix}",
+                          "--disable-introspection"
     system "make install"
   end
 end

@@ -1,10 +1,9 @@
 require 'formula'
-require 'hardware'
 
 class Qt < Formula
+  homepage 'http://qt.nokia.com/'
   url 'http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.8.0.tar.gz'
   md5 'e8a5fdbeba2927c948d9f477a6abe904'
-  homepage 'http://qt.nokia.com/'
 
   bottle do
     url 'https://downloads.sf.net/project/machomebrew/Bottles/qt-4.8.0-bottle.tar.gz'
@@ -12,6 +11,10 @@ class Qt < Formula
   end
 
   head 'git://gitorious.org/qt/qt.git', :branch => 'master'
+
+  fails_with :clang do
+    build 318
+  end
 
   def options
     [
@@ -27,16 +30,13 @@ class Qt < Formula
   depends_on 'sqlite' if MacOS.leopard?
 
   def patches
-    [
-      # Fix compilation with llvm-gcc. Remove for 4.8.1.
-      "https://qt.gitorious.org/qt/qt/commit/448ab7cd150ab7bb7d12bcac76bc2ce1c72298bd?format=patch"
-    ]
+    # Fix compilation with llvm-gcc. Remove for 4.8.1.
+    [ "https://qt.gitorious.org/qt/qt/commit/448ab?format=patch",
+    # Fix Xcode 4 generation. Remove for 4.8.1.
+      "https://qt.gitorious.org/qt/qt/commit/b5871?format=patch" ]
   end
 
   def install
-    # Needed for Qt 4.8.0 due to attempting to link moc with gcc.
-    ENV['LD'] = ENV['CXX']
-
     ENV.x11
     ENV.append "CXXFLAGS", "-fvisibility=hidden"
     args = ["-prefix", prefix,
@@ -75,12 +75,14 @@ class Qt < Formula
     if ARGV.include? '--with-debug-and-release'
       args << "-debug-and-release"
       # Debug symbols need to find the source so build in the prefix
-      Dir.chdir '..'
-      mv "qt-everywhere-opensource-src-#{version}", "#{prefix}/src"
-      Dir.chdir "#{prefix}/src"
+      mv "../qt-everywhere-opensource-src-#{version}", "#{prefix}/src"
+      cd "#{prefix}/src"
     else
       args << "-release"
     end
+
+    # Needed for Qt 4.8.0 due to attempting to link moc with gcc.
+    ENV['LD'] = ENV['CXX']
 
     system "./configure", *args
     system "make"
@@ -99,6 +101,7 @@ class Qt < Formula
     # Some config scripts will only find Qt in a "Frameworks" folder
     # VirtualBox is an example of where this is needed
     # See: https://github.com/mxcl/homebrew/issues/issue/745
+    # TODO - surely this link can be made without the `cd`
     cd prefix do
       ln_s lib, "Frameworks"
     end
@@ -110,6 +113,10 @@ class Qt < Formula
       framework_name = File.basename(File.dirname(path), '.framework')
       ln_s path.realpath, include+framework_name
     end
+  end
+
+  def test
+    "#{bin}/qmake --version"
   end
 
   def caveats; <<-EOS.undent
