@@ -5,9 +5,22 @@ class Curl < Formula
   url 'http://curl.haxx.se/download/curl-7.26.0.tar.bz2'
   sha256 'fced262f16eb6bfcdcea15e04a7905ffcb5ff04b14a19ca35b9df86d6720d26a'
 
+  depends_on 'pkg-config' => :build
+  depends_on 'libssh2' if ARGV.include? "--with-ssh"
+
+  def options
+    [["--with-ssh", "Build with scp and sftp support."]]
+  end
+
   def install
-    system "./configure", "--disable-debug", "--disable-dependency-tracking",
-                          "--prefix=#{prefix}"
+    args = %W[
+        --disable-debug
+        --disable-dependency-tracking
+        --prefix=#{prefix}]
+
+    args << "--with-libssh2" if ARGV.include? "--with-ssh"
+
+    system "./configure", *args
     system "make install"
   end
 end
