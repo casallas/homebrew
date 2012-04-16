@@ -33,8 +33,8 @@ class Git < Formula
     ENV['V'] = '1' # build verbosely
     ENV['NO_R_TO_GCC_LINKER'] = '1' # pass arguments to LD correctly
     ENV['NO_GETTEXT'] = '1'
-    # workaround for users of perlbrew
-    ENV['PERL_PATH'] = which 'perl'
+    ENV['PERL_PATH'] = which 'perl' # workaround for users of perlbrew
+    ENV['PYTHON_PATH'] = which 'python' # python can be brewed or unbrewed
 
     ENV['BLK_SHA1'] = '1' if ARGV.include? '--with-blk-sha1'
 
