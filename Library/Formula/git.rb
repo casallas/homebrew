@@ -67,4 +67,10 @@ class Git < Formula
       #{HOMEBREW_PREFIX}/share/git-core/contrib
     EOS
   end
+
+  def test
+    HOMEBREW_REPOSITORY.cd do
+      `#{bin}/git ls-files -- bin`.chomp == 'bin/brew'
+    end
+  end
 end
