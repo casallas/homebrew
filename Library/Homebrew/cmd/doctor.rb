@@ -32,7 +32,12 @@ end
 
 
 def path_folders
-  ENV['PATH'].split(':').collect{|p| remove_trailing_slash(File.expand_path(p))}.uniq
+  @path_folders ||= ENV['PATH'].split(':').collect do |p|
+    begin remove_trailing_slash(File.expand_path(p))
+    rescue ArgumentError
+      onoe "The following PATH component is invalid: #{p}"
+    end
+  end.uniq.compact
 end
 
 
@@ -53,7 +58,8 @@ end
 # http://sourceforge.net/projects/macgpg2/files/
 def check_for_macgpg2
   if File.exist? "/Applications/start-gpg-agent.app" or
-     File.exist? "/Library/Receipts/libiconv1.pkg"
+     File.exist? "/Library/Receipts/libiconv1.pkg" or
+     File.exist? "/usr/local/MacGPG2"
     <<-EOS.undent
       You may have installed MacGPG2 via the package installer.
       Several other checks in this script will turn up problems, such as stray
@@ -183,6 +189,7 @@ def check_for_broken_symlinks
   broken_symlinks = []
   %w[lib include sbin bin etc share].each do |d|
     d = HOMEBREW_PREFIX/d
+    next unless d.directory?
     d.find do |pn|
       broken_symlinks << pn if pn.symlink? and pn.readlink.expand_path.to_s =~ /^#{HOMEBREW_PREFIX}/ and not pn.exist?
     end
@@ -228,6 +235,17 @@ def check_cc
     Line Tools for Xcode. You can either download this from http://connect.apple.com
     or install them from inside Xcode's Download preferences. Homebrew does not
     require all of Xcode! You only need the Command Line Tools package!
+    EOS
+  end
+end
+
+def check_standard_compilers
+  return if check_for_latest_xcode # only check if Xcode is up to date
+  if !MacOS.compilers_standard? then <<-EOS.undent
+    Your compilers are different from the standard versions for your Xcode.
+    If you have Xcode 4.3 or newer, you should install the Command Line Tools for
+    Xcode from within Xcode's Download preferences.
+    Otherwise, you should reinstall Xcode.
     EOS
   end
 end
@@ -439,32 +457,24 @@ def check_user_path_3
 end
 
 def check_which_pkg_config
-  binary = `/usr/bin/which pkg-config`.chomp
-  return if binary.empty?
+  binary = which 'pkg-config'
+  return if binary.nil?
 
-  unless binary == "#{HOMEBREW_PREFIX}/bin/pkg-config"
-    <<-EOS.undent
-      You have a non-brew 'pkg-config' in your PATH:
-        #{binary}
+  unless binary.to_s == "#{HOMEBREW_PREFIX}/bin/pkg-config" then <<-EOS.undent
+    You have a non-Homebrew 'pkg-config' in your PATH:
+      #{binary}
 
-      `./configure` may have problems finding brew-installed packages using
-      this other pkg-config.
+    `./configure` may have problems finding brew-installed packages using
+    this other pkg-config.
     EOS
   end
 end
 
 def check_pkg_config_paths
-  binary = `/usr/bin/which pkg-config`.chomp
-  return if binary.empty?
+  binary = which 'pkg-config'
+  return if binary.nil?
 
-  # Use the debug output to determine which paths are searched
-  pkg_config_paths = []
-
-  debug_output = `pkg-config --debug 2>&1`
-  debug_output.split("\n").each do |line|
-    line =~ /Scanning directory '(.*)'/
-    pkg_config_paths << $1 if $1
-  end
+  pkg_config_paths = `pkg-config --variable pc_path pkg-config`.chomp.split(':')
 
   # Check that all expected paths are being searched
   unless pkg_config_paths.include? "/usr/X11/lib/pkgconfig"
@@ -500,22 +510,26 @@ def check_for_gettext
 end
 
 def check_for_iconv
-  if %w[lib/libiconv.dylib
-        include/iconv.h ].any? { |f| File.exist? "#{HOMEBREW_PREFIX}/#{f}" }
+  iconv_files = %w[lib/iconv.dylib
+    include/iconv.h].select { |f| File.exist? "#{HOMEBREW_PREFIX}/#{f}" }
+  if !iconv_files.empty?
     <<-EOS.undent
-      libiconv was detected in your PREFIX.
+      The following libiconv files were detected in #{HOMEBREW_PREFIX}:
+      #{iconv_files.join "\n      "}
       Homebrew doesn't provide a libiconv formula, and expects to link against
       the system version in /usr/lib.
 
-      If you have a non-Homebrew provided libiconv, many formulae will fail
-      to compile or link, especially if it wasn't compiled with the proper
-      architectures.
+      If you have an alternate libiconv, many formulae will fail to compile or
+      link, especially if it wasn't compiled with the proper architectures.
     EOS
+  else
+    nil
   end
 end
 
 def check_for_config_scripts
-  real_cellar = HOMEBREW_CELLAR.exist? && HOMEBREW_CELLAR.realpath
+  return unless HOMEBREW_CELLAR.exist?
+  real_cellar = HOMEBREW_CELLAR.realpath
 
   config_scripts = []
 
@@ -616,7 +630,7 @@ def check_for_multiple_volumes
 end
 
 def check_for_git
-  unless which_s "git" then <<-EOS.undent
+  unless which "git" then <<-EOS.undent
     Git could not be found in your PATH.
     Homebrew uses Git for several internal functions, and some formulae use Git
     checkouts instead of stable tarballs. You may want to install Git:
@@ -626,7 +640,7 @@ def check_for_git
 end
 
 def check_git_newline_settings
-  return unless which_s "git"
+  return unless which "git"
 
   autocrlf = `git config --get core.autocrlf`.chomp
   safecrlf = `git config --get core.safecrlf`.chomp
@@ -647,9 +661,9 @@ end
 def check_for_autoconf
   return if MacOS.xcode_version >= "4.3"
 
-  autoconf = `/usr/bin/which autoconf`.chomp
+  autoconf = which('autoconf')
   safe_autoconfs = %w[/usr/bin/autoconf /Developer/usr/bin/autoconf]
-  unless autoconf.empty? or safe_autoconfs.include? autoconf then <<-EOS.undent
+  unless autoconf.nil? or safe_autoconfs.include? autoconf.to_s then <<-EOS.undent
     An "autoconf" in your path blocks the Xcode-provided version at:
       #{autoconf}
 
@@ -757,7 +771,7 @@ def check_missing_deps
 end
 
 def check_git_status
-  return unless which_s "git"
+  return unless which "git"
   HOMEBREW_REPOSITORY.cd do
     unless `git status -s -- Library/Homebrew/ 2>/dev/null`.chomp.empty? then <<-EOS.undent
       You have uncommitted modifications to Homebrew's core.
@@ -786,7 +800,7 @@ end
 
 def check_git_version
   # see https://github.com/blog/642-smart-http-support
-  return unless which_s "git"
+  return unless which "git"
   `git --version`.chomp =~ /git version (\d)\.(\d)\.(\d)/
 
   if $2.to_i < 6 or $2.to_i == 6 and $3.to_i < 6 then <<-EOS.undent
@@ -798,7 +812,7 @@ def check_git_version
 end
 
 def check_for_enthought_python
-  if which_s "enpkg" then <<-EOS.undent
+  if which "enpkg" then <<-EOS.undent
     Enthought Python was found in your PATH.
     This can cause build problems, as this software installs its own
     copies of iconv and libxml2 into directories that are picked up by
@@ -808,7 +822,7 @@ def check_for_enthought_python
 end
 
 def check_for_bad_python_symlink
-  return unless which_s "python"
+  return unless which "python"
   # Indeed Python --version outputs to stderr (WTF?)
   `python --version 2>&1` =~ /Python (\d+)\./
   unless $1 == "2" then <<-EOS.undent
@@ -820,6 +834,12 @@ end
 
 def check_for_outdated_homebrew
   HOMEBREW_REPOSITORY.cd do
+    if File.directory? ".git"
+      local = `git rev-parse -q --verify refs/remotes/origin/master`.chomp
+      remote = /^([a-f0-9]{40})/.match(`git ls-remote origin refs/heads/master`)[0]
+      return if local == remote
+    end
+
     timestamp = if File.directory? ".git"
       `git log -1 --format="%ct" HEAD`.to_i
     else
@@ -835,6 +855,7 @@ def check_for_outdated_homebrew
 end
 
 def check_for_unlinked_but_not_keg_only
+  return unless HOMEBREW_CELLAR.exist?
   unlinked = HOMEBREW_CELLAR.children.reject do |rack|
     if not rack.directory?
       true
@@ -886,9 +907,8 @@ module Homebrew extend self
       unless out.nil? or out.empty?
         puts unless Homebrew.failed?
         lines = out.to_s.split('\n')
-        opoo lines.shift
+        ofail lines.shift
         puts lines
-        Homebrew.failed = true
       end
     end
 

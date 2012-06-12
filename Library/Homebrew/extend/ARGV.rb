@@ -89,11 +89,15 @@ module HomebrewArgvExtension
   end
 
   def build_head?
-    flag? '--HEAD'
+    include? '--HEAD'
   end
 
   def build_devel?
     include? '--devel'
+  end
+
+  def build_stable?
+    not (build_head? or build_devel?)
   end
 
   def build_universal?
