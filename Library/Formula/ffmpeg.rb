@@ -4,6 +4,10 @@ def ffplay?
   ARGV.include? '--with-ffplay'
 end
 
+def openjpeg?
+  ARGV.include? '--with-openjpeg'
+end
+
 class Ffmpeg < Formula
   homepage 'http://ffmpeg.org/'
   url 'http://ffmpeg.org/releases/ffmpeg-0.11.1.tar.bz2'
@@ -12,6 +16,7 @@ class Ffmpeg < Formula
   head 'git://git.videolan.org/ffmpeg.git'
 
   depends_on 'yasm' => :build
+  depends_on :x11
   depends_on 'x264' => :optional
   depends_on 'faac' => :optional
   depends_on 'lame' => :optional
@@ -26,16 +31,17 @@ class Ffmpeg < Formula
   depends_on 'libass' => :optional
 
   depends_on 'sdl' if ffplay?
+  depends_on 'openjpeg' if openjpeg?
 
   def options
     [
       ["--with-tools", "Install additional FFmpeg tools."],
-      ["--with-ffplay", "Build ffplay."]
+      ["--with-ffplay", "Build ffplay."],
+      ["--with-openjpeg", "Use openjpeg for jpeg2000 support"]
     ]
   end
 
   def install
-    ENV.x11
     args = ["--prefix=#{prefix}",
             "--enable-shared",
             "--enable-gpl",
@@ -43,7 +49,10 @@ class Ffmpeg < Formula
             "--enable-nonfree",
             "--enable-hardcoded-tables",
             "--enable-libfreetype",
-            "--cc=#{ENV.cc}"]
+            "--cc=#{ENV.cc}",
+            "--host-cflags=#{ENV.cflags}",
+            "--host-ldflags=#{ENV.ldflags}"
+           ]
 
     args << "--enable-libx264" if Formula.factory('x264').linked_keg.exist?
     args << "--enable-libfaac" if Formula.factory('faac').linked_keg.exist?
@@ -58,6 +67,7 @@ class Ffmpeg < Formula
     args << "--enable-libass" if Formula.factory('libass').linked_keg.exist?
     args << "--enable-libvo-aacenc" if Formula.factory('libvo-aacenc').linked_keg.exist?
     args << "--disable-ffplay" unless ffplay?
+    args << "--enable-libopenjpeg" if openjpeg?
 
     # For 32-bit compilation under gcc 4.2, see:
     # http://trac.macports.org/ticket/20938#comment:22
