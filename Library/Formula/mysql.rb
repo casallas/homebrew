@@ -7,8 +7,18 @@ class Mysql < Formula
   sha1 '85dfea413a7d5d2733a40f9dd79cf2320302979f'
 
   depends_on 'cmake' => :build
-  depends_on 'readline'
-  depends_on 'pidof'
+  depends_on 'pidof' unless MacOS.mountain_lion?
+
+  bottle do
+    sha1 '31e9955a3a0a6dbc2baec8f1dade79257da428a8' => :mountainlion
+    sha1 'b3cf78f7ddb812d38e376076e05020c0b412ee9c' => :lion
+    sha1 '9f36132081d2b603c8aff4a7ee561962936892ec' => :snowleopard
+  end
+
+  conflicts_with 'mariadb',
+    :because => "mysql and mariadb install the same binaries."
+  conflicts_with 'percona-server',
+    :because => "mysql and percona-server install the same binaries."
 
   fails_with :llvm do
     build 2326
@@ -92,6 +102,8 @@ class Mysql < Formula
     # Fix up the control script and link into bin
     inreplace "#{prefix}/support-files/mysql.server" do |s|
       s.gsub!(/^(PATH=".*)(")/, "\\1:#{HOMEBREW_PREFIX}/bin\\2")
+      # pidof can be replaced with pgrep from proctools on Mountain Lion
+      s.gsub!(/pidof/, 'pgrep') if MacOS.mountain_lion?
     end
     ln_s "#{prefix}/support-files/mysql.server", bin
   end

@@ -15,14 +15,14 @@ class Recode < Formula
   end
 
   def copy_libtool_files!
-    if MacOS.xcode_version >= "4.3"
+    if not MacOS::Xcode.provides_autotools?
       s = Formula.factory('libtool').share
       d = "#{s}/libtool/config"
       cp ["#{d}/config.guess", "#{d}/config.sub"], "."
     elsif MacOS.leopard?
-      cp Dir["#{MacOS.xcode_prefix}/usr/share/libtool/config.*"], "."
+      cp Dir["#{MacOS::Xcode.prefix}/usr/share/libtool/config.*"], "."
     else
-      cp Dir["#{MacOS.xcode_prefix}/usr/share/libtool/config/config.*"], "."
+      cp Dir["#{MacOS::Xcode.prefix}/usr/share/libtool/config/config.*"], "."
     end
   end
 
@@ -31,10 +31,11 @@ class Recode < Formula
 
     copy_libtool_files!
 
-    system "./configure", "--disable-debug", "--disable-dependency-tracking",
+    system "./configure", "--disable-debug",
+                          "--disable-dependency-tracking",
                           "--without-included-gettext",
-                          "--infodir=#{info}",
                           "--prefix=#{prefix}",
+                          "--infodir=#{info}",
                           "--mandir=#{man}"
     system "make install"
   end
