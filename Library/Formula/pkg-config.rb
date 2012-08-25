@@ -2,10 +2,8 @@ require 'formula'
 
 class PkgConfig < Formula
   homepage 'http://pkgconfig.freedesktop.org'
-  url 'http://pkgconfig.freedesktop.org/releases/pkg-config-0.27.tar.gz'
-  sha256 '79a6b43ee6633c9e6cc03eb1706370bb7a8450659845b782411f969eaba656a4'
-
-  depends_on 'gettext'
+  url 'http://pkgconfig.freedesktop.org/releases/pkg-config-0.27.1.tar.gz'
+  sha256 '4f63d0df3035101b12949250da5231af49e3c3afcd8fb18554fa7c3cb92d8c17'
 
   def install
     paths = %W[
@@ -21,11 +19,5 @@ class PkgConfig < Formula
     system "make"
     system "make check"
     system "make install"
-
-    # Fix some bullshit.
-    # pkg-config tries to install glib's m4 macros, which will conflict with
-    # an actual glib install. See:
-    # https://bugs.freedesktop.org/show_bug.cgi?id=52031
-    rm Dir["#{share}/aclocal/g*.m4"]
   end
 end
