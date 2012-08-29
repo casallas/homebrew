@@ -4,19 +4,18 @@ class Fontforge < Formula
   homepage 'http://fontforge.sourceforge.net'
   url 'http://downloads.sourceforge.net/project/fontforge/fontforge-source/fontforge_full-20120731-b.tar.bz2'
   sha1 'b520f532b48e557c177dffa29120225066cc4e84'
-  version '20120731'
 
-  head 'git://fontforge.git.sourceforge.net/gitroot/fontforge/fontforge'
+  head 'https://github.com/fontforge/fontforge.git'
 
   depends_on 'pkg-config' => :build
   depends_on 'gettext'
   depends_on 'pango'
   depends_on 'potrace'
+  depends_on 'libspiro'
   depends_on :x11
+  depends_on :xcode # Because: #include </Developer/Headers/FlatCarbon/Files.h>
 
-  def options
-    [['--without-python', 'Build without Python.']]
-  end
+  option 'without-python', 'Build without Python'
 
   fails_with :llvm do
     build 2336
@@ -24,11 +23,21 @@ class Fontforge < Formula
   end
 
   def install
+    # Reason: Designed for the 10.7 SDK because it uses FlatCarbon.
+    #         MACOSX_DEPLOYMENT_TARGET fixes ensuing Python 10.7 vs 10.8 clash.
+    # Discussed: https://github.com/mxcl/homebrew/pull/14097
+    # Reported:  Not yet.
+    if MacOS.mountain_lion?
+      ENV.macosxsdk("10.7")
+      ENV.append "CFLAGS", "-isysroot #{MacOS.sdk_path(10.7)}"
+      ENV["MACOSX_DEPLOYMENT_TARGET"] = "10.8"
+    end
+
     args = ["--prefix=#{prefix}",
             "--enable-double",
             "--without-freetype-bytecode"]
 
-    if ARGV.include? "--without-python"
+    if build.include? "without-python"
       args << "--without-python"
     else
       python_prefix = `python-config --prefix`.strip
@@ -39,7 +48,7 @@ class Fontforge < Formula
     end
 
     # Fix linking to correct Python library
-    ENV.prepend "LDFLAGS", "-L#{python_prefix}/lib" unless ARGV.include? "--without-python"
+    ENV.prepend "LDFLAGS", "-L#{python_prefix}/lib" unless build.include? "without-python"
     # Fix linker error; see: http://trac.macports.org/ticket/25012
     ENV.append "LDFLAGS", "-lintl"
     # Reset ARCHFLAGS to match how we build
@@ -62,8 +71,13 @@ class Fontforge < Formula
     # Fix hard-coded include file paths. Reported usptream:
     # http://sourceforge.net/mailarchive/forum.php?thread_name=C1A32103-A62D-468B-AD8A-A8E0E7126AA5%40smparkes.net&forum_name=fontforge-devel
     # https://trac.macports.org/ticket/33284
+    if MacOS::Xcode.version >= '4.4'
+      header_prefix = "#{MacOS.sdk_path(10.7)}/Developer"
+    else
+      header_prefix = MacOS::Xcode.prefix
+    end
     inreplace %w(fontforge/macbinary.c fontforge/startui.c gutils/giomime.c) do |s|
-      s.gsub! "/Developer", MacOS::Xcode.prefix
+      s.gsub! "/Developer", header_prefix
     end
 
     system "make"
@@ -92,7 +106,7 @@ class Fontforge < Formula
     EOS
 
     s = general_caveats
-    s += python_caveats unless ARGV.include? "--without-python"
+    s += python_caveats unless build.include? "without-python"
     return s
   end
 end
