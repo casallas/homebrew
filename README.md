@@ -6,8 +6,9 @@ Initially done by Sergio Rubio, continued by Juan Sebastian Casallas.
 
 Requirements
 ------------
-ruby 1.9.3
-gcc (should work with old versions)
+- git (unless you want to manually download the source tarball: https://github.com/jscasallas/homebrew/zipball/linux)
+- ruby 1.9.3
+- gcc (should work with old versions)
 
 Installation
 ------------
