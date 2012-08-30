@@ -36,8 +36,8 @@ echo "fi" >> ~/.bashrc
 Usage
 -----
 
-The fonctionality of this port is pretty limited, compared to the upstream homebrew, but the main features,
-such as dependency tracking are there. Maybe one day all features will get implemented.
+The functionality of this port is pretty limited compared to the upstream homebrew, but the main features,
+such as dependency tracking, are there. Maybe one day all features will get implemented.
 
 For example you might want to start installing cmake:
 `brew install cmake`
