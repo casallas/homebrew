@@ -25,11 +25,6 @@ class Pango < Formula
   end
 
   def install
-    # Always prefer our cairo over XQuartz cairo
-    cairo = Formula.factory('cairo')
-    ENV['CAIRO_CFLAGS'] = "-I#{cairo.include}/cairo"
-    ENV['CAIRO_LIBS'] = "-L#{cairo.lib} -lcairo"
-
     args = %W[
       --disable-dependency-tracking
       --prefix=#{prefix}
@@ -51,7 +46,6 @@ class Pango < Formula
                                   "--waterfall", "--rotate=10",
                                   "--annotate=1", "--header",
                                   "-q", "-o", "output.png"
-      system "/usr/bin/qlmanage", "-p", "output.png"
     end
   end
 end

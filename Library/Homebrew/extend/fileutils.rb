@@ -13,12 +13,15 @@ module FileUtils extend self
     # If the user has FileVault enabled, then we can't mv symlinks from the
     # /tmp volume to the other volume. So we let the user override the tmp
     # prefix if they need to.
-    tmp_prefix = ENV['HOMEBREW_TEMP'] || '/tmp'
-    tmp = Pathname.new(`/usr/bin/mktemp -d #{tmp_prefix}/homebrew-#{name}-#{version}-XXXX`.chomp)
-    raise "Failed to create sandbox: #{tmp}" unless tmp.directory?
-    cd(tmp){ yield }
+    tmp = ENV['HOMEBREW_TEMP'].chuzzle || '/tmp'
+    tempd = `/usr/bin/mktemp -d #{tmp}/brew-#{name}-#{version}-XXXX`.chuzzle
+    raise "Failed to create sandbox" if tempd.nil?
+    prevd = pwd
+    cd tempd
+    yield
   ensure
-    ignore_interrupts{ tmp.rmtree } if tmp
+    cd prevd if prevd
+    ignore_interrupts{ rm_r tempd } if tempd
   end
 
   # A version of mkdir that also changes to that folder in a block.

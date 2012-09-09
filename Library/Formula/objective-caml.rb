@@ -7,10 +7,7 @@ class ObjectiveCaml < Formula
 
   head 'http://caml.inria.fr/svn/ocaml/trunk', :using => :svn
 
-  depends_on :x11
-
-  # Don't strip symbols, so dynamic linking doesn't break.
-  skip_clean :all
+  depends_on :x11 if MacOS::X11.installed?
 
   # See http://caml.inria.fr/mantis/view.php?id=5700
   def patches

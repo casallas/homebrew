@@ -38,7 +38,7 @@ class Lilypond < Formula
   skip_clean :all
 
   fails_with :clang do
-    build :all
+    build 421
     cause 'Strict C99 compliance error in a pointer conversion.'
   end
 
@@ -60,7 +60,7 @@ class Lilypond < Formula
         { c' d' e' }
       EOS
       lilykeg = Formula.factory('lilypond').linked_keg
-      system "#{lilykeg}/bin/lilypond test.ly && /usr/bin/qlmanage -p test.pdf"
+      system "#{lilykeg}/bin/lilypond test.ly"
     end
   end
 end

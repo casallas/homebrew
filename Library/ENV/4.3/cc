@@ -1,13 +1,9 @@
-#!/usr/bin/ruby -W0
+#!/System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/bin/ruby -W0
+
 #TODO make it work with homebrew/dupes/gcc
 #TODO? If we find -mmacosx-version-min=10.8, change sdkroot? warn visibly if no such SDK?
 #TODO fix pkg-config files, should point to /usr/local or /usr/local/opt
-#TODO for easier to understand code, don't monkey-patch ENV, just set via a hash from a helper class
 #TODO create mechanism to specify build effects like %w{-O0 -O4 vanilla-arg-parsing sdk=10.6} etc.
-#TODO DSL for lame-env (and rename to typical-env or something better)
-#TODO consider always setting CC to cc and instead having HOMEBREW_CC to force cc choice in end toolchain
-#     in verbose mode print out things like "gcc called, but redirecting to clang" if that happens
-#TODO `brew sh`: https://github.com/mxcl/homebrew/issues/14381#issuecomment-8017538
 
 require "#{File.dirname __FILE__}/../libsuperenv"
 require 'set'
@@ -18,23 +14,22 @@ end
 def nclt?
   $sdkroot != nil
 end
-def cmake_prefixes
-  @prefixes ||= ENV['CMAKE_PREFIX_PATH'].split(':').reject do |path|
-    case path
-      when '/usr/local' then !nclt?
-      when '/usr', '/', "#$sdkroot/usr" then true
-    end
+def syspath
+  if nclt?
+    %W{#$sdkroot/usr #$sdkroot/usr/local}
+  else
+    %W{/usr /usr/local}
   end
 end
 
 class Cmd
   def initialize path, args
-    @cmd = path.basename.freeze
+    @arg0 = path.basename.freeze
     @args = args.freeze
   end
   def mode
-    if @cmd == 'cpp' or @cmd == 'ld'
-      @cmd.to_sym
+    if @arg0 == 'cpp' or @arg0 == 'ld'
+      @arg0.to_sym
     elsif @args.include? '-c'
       :cc
     elsif @args.include? '-E'
@@ -44,29 +39,30 @@ class Cmd
     end
   end
   def tool
-    case @cmd
-      when /gcc/ then 'gcc'
-      when /g\+\+/ then 'g++'
-    when 'clang', 'clang++'
-      @cmd
-    when 'ld', 'cpp', 'cc'
-      ENV['HOMEBREW_CC'].chuzzle or 'clang'
+    @tool ||= case @arg0
+    when 'ld' then 'ld'
+    when 'cc' then ENV['HOMEBREW_CC']
     when 'c++'
-      case ENV['HOMEBREW_CC']
-        when /gcc/ then 'g++'
-        else 'clang++'
+      if ENV['HOMEBREW_CC'] =~ /gcc/
+        'g++'
+      else
+        'clang++'
       end
     else
-      abort "Unknown command: #{@cmd}"
+      @arg0
     end
   end
   def args
-    args = if cccfg? 'O'
-      refurbished_args
-    else
+    args = if not cccfg? 'O' or tool == 'ld'
       @args.dup
+    else
+      refurbished_args
     end
-    args.unshift("--sysroot=#$sdkroot") if nclt?
+    if tool != 'ld'
+      args.unshift("--sysroot=#$sdkroot")
+    else
+      args.unshift($sdkroot).unshift("-syslibroot")
+    end if nclt?
     case mode
     when :cpp
       %w{-E} + cppflags + args
@@ -79,8 +75,9 @@ class Cmd
     end.compact
   end
   def refurbished_args
-    iset = Set.new(cmake_prefixes.map{|prefix| "#{prefix}/include" })
-    lset = Set.new
+    lset = Set.new(syslibpath)
+    iset = Set.new(syscpath)
+
     args = []
     whittler = @args.each
     loop do
@@ -89,30 +86,34 @@ class Cmd
         whittler.next
       when /^-g\d?/, /^-gstabs\d+/, '-gstabs+', /^-ggdb\d?/, '-gdwarf-2',
            /^-march=.+/, /^-mtune=.+/, '-m64', '-m32',
-           /^-O[0-9zs]/, '-fast',
-           %r{^-[IL]/opt/local}, %r{^-[IL]/sw},    # no macports/fink
-           %r{^-[IL]/usr/X11}, %r{^-[IL]/opt/X11}, # we add X11 ourselves
+           /^-O[0-9zs]?/, '-fast',
            '-pedantic', '-pedantic-errors'
+      when '-fopenmp', '-lgomp'
+        # clang doesn't support OpenMP
+        args << arg if not tool =~ /^clang/
       when /^-W.*/
         args << arg if arg =~ /^-Wl,/
+      when '-macosx_version_min', '-dylib_install_name'
+        args << "-Wl,#{arg},#{whittler.next}"
+      when '-dylib'
+        args << "-Wl,#{arg}"
       when /^-I(.+)/
         # it is okay to add a space after the -I; so let's support it
         path = $1.chuzzle || whittler.next
         args << "-I#{path}" if iset.add?(path.cleanpath)
-      when /^-l(.+)/
-        lib = $1.chuzzle || whittler.next
-        args << "-l#{lib}" if lset.add?(lib)
+      when /^-L(.+)/
+        path = $1.chuzzle || whittler.next
+        case path.cleanpath
+        when %r{^/opt}, %r{^/sw}, %r{/usr/X11}
+          # NOOP
+        else
+          args << "-L#{path}" if lset.add?(path.cleanpath)
+        end
       else
         args << arg
       end
     end
-
-    rms = @args - args
-    %w{CPPFLAGS LDFLAGS CXXFLAGS CFLAGS}.each do |flag|
-      unison = ENV[flag].split(' ') & rms
-      puts "Warning! #{unison*' '} removed from #{flag.upcase} by superenv" unless unison.empty?
-    end
-
+    make_fuss(args)
     args
   end
   def cflags
@@ -126,21 +127,51 @@ class Cmd
       []
     end
   end
+  def syslibpath
+    # We reject brew's lib as we explicitly add this as a -L flag, thus it
+    # is given higher priority by cc, so it surpasses the system libpath.
+    # NOTE this only counts if Homebrew is installed at /usr/local
+    syspath.map{|d| "#{d}/lib" }.reject{ "#$brewfix/lib" }
+  end
+  def syscpath
+    isystem, _ = cpath
+    isystem + syspath.map{|d| "#{d}/include" }
+  end
+  def cpath
+    cpath = ENV['CMAKE_PREFIX_PATH'].split(':').map{|d| "#{d}/include" } + ENV['CMAKE_INCLUDE_PATH'].split(':')
+    opt = cpath.select{|prefix| prefix =~ %r{^#$brewfix/opt} }
+    sys = cpath - opt
+    [sys, opt]
+  end
+  def libpath
+    ENV['CMAKE_PREFIX_PATH'].split(':').map{|d| "#{d}/lib" } +
+    ENV['CMAKE_LIBRARY_PATH'].split(':') -
+    syslibpath
+  end
   def ldflags
-    cmake_prefixes.map{|prefix| "#{prefix}/lib" }.to_flags('-L')
+    libpath.to_flags('-L')
   end
   def cppflags
-    all = cmake_prefixes.map{|prefix| "#{prefix}/include" }
-    opt = all.select{|prefix| prefix =~ %r{^#$brewfix/opt} }
-    sys = all - opt + ENV['CMAKE_INCLUDE_PATH'].split(':')
-    # we want our keg-only includes to be found before system includes so that
-    # they override the system options.
+    sys, opt = cpath
+    # we want our keg-only includes to be found before system includes *and*
+    # before any other includes the build-system adds
     sys.to_flags('-isystem') + opt.to_flags('-I')
+  end
+  def make_fuss args
+    dels = @args - args
+    adds = args - @args
+    puts "brew: Superenv removed: #{dels*' '}" unless dels.empty?
+    puts "brew: Superenv added: #{adds*' '}" unless adds.empty?
   end
 end
 
 ####################################################################### sanity
-abort "The build-tool has reset ENV. --lame-env required." unless ENV['HOMEBREW_BREW_FILE']
+abort "The build-tool has reset ENV. --env=std required." unless ENV['HOMEBREW_BREW_FILE']
+
+case ENV['HOMEBREW_CC'].chuzzle when 'cc', nil
+  # those values are not allowed
+  ENV['HOMEBREW_CC'] = 'clang'
+end
 
 ######################################################################### main
 cmd = Cmd.new($0, ARGV)

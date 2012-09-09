@@ -11,14 +11,14 @@ require 'macos'
 # 7) Simpler formula that *just work*
 # 8) Build-system agnostic configuration of the tool-chain
 
-def superenv_bin
+def superbin
   @bin ||= (HOMEBREW_REPOSITORY/"Library/ENV").children.reject{|d| d.basename.to_s > MacOS::Xcode.version }.max
 end
 
 def superenv?
   not MacOS::Xcode.bad_xcode_select_path? and # because xcrun won't work
   not MacOS::Xcode.folder.nil? and # because xcrun won't work
-  superenv_bin and superenv_bin.directory? and
+  superbin and superbin.directory? and
   not ARGV.include? "--env=std"
 end
 
@@ -28,7 +28,7 @@ class << ENV
   alias_method :x11?, :x11
 
   def reset
-    %w{CC CXX LD CPP OBJC MAKE
+    %w{CC CXX CPP OBJC MAKE
       CFLAGS CXXFLAGS OBJCFLAGS OBJCXXFLAGS LDFLAGS CPPFLAGS
       MACOS_DEPLOYMENT_TARGET SDKROOT
       CMAKE_PREFIX_PATH CMAKE_INCLUDE_PATH CMAKE_FRAMEWORK_PATH}.
@@ -40,11 +40,9 @@ class << ENV
 
   def setup_build_environment
     reset
-    ENV['CC'] = 'cc'
+    check
+    ENV['CC'] = ENV['LD'] = 'cc'
     ENV['CXX'] = 'c++'
-    ENV['LD'] = 'ld'
-    ENV['CPP'] = 'cpp'
-    ENV['MAKE'] = 'make'
     ENV['MAKEFLAGS'] ||= "-j#{determine_make_jobs}"
     ENV['PATH'] = determine_path
     ENV['PKG_CONFIG_PATH'] = determine_pkg_config_path
@@ -54,7 +52,13 @@ class << ENV
     ENV['CMAKE_PREFIX_PATH'] = determine_cmake_prefix_path
     ENV['CMAKE_FRAMEWORK_PATH'] = "#{MacOS.sdk_path}/System/Library/Frameworks" if MacSystem.xcode43_without_clt?
     ENV['CMAKE_INCLUDE_PATH'] = determine_cmake_include_path
+    ENV['CMAKE_LIBRARY_PATH'] = determine_cmake_library_path
     ENV['ACLOCAL_PATH'] = determine_aclocal_path
+    ENV['VERBOSE'] = '1' if ARGV.verbose?
+  end
+
+  def check
+    raise if MacSystem.xcode43_without_clt? and MacOS.sdk_path.nil?
   end
 
   def universal_binary
@@ -95,7 +99,7 @@ class << ENV
   end
 
   def determine_path
-    paths = [superenv_bin]
+    paths = [superbin]
     if MacSystem.xcode43_without_clt?
       paths << "#{MacSystem.xcode43_developer_dir}/usr/bin"
       paths << "#{MacSystem.xcode43_developer_dir}/Toolchains/XcodeDefault.xctoolchain/usr/bin"
@@ -110,8 +114,8 @@ class << ENV
   def determine_pkg_config_path
     paths  = deps.map{|dep| "#{HOMEBREW_PREFIX}/opt/#{dep}/lib/pkgconfig" }
     paths += deps.map{|dep| "#{HOMEBREW_PREFIX}/opt/#{dep}/share/pkgconfig" }
-    paths << "#{HOMEBREW_REPOSITORY}/lib/pkgconfig"
-    paths << "#{HOMEBREW_REPOSITORY}/share/pkgconfig"
+    paths << "#{HOMEBREW_PREFIX}/lib/pkgconfig"
+    paths << "#{HOMEBREW_PREFIX}/share/pkgconfig"
     # we put our paths before X because we dupe some of the X libraries
     paths << "#{MacSystem.x11_prefix}/lib/pkgconfig" << "#{MacSystem.x11_prefix}/share/pkgconfig" if x11?
     # Mountain Lion no longer ships some .pcs; ensure we pick up our versions
@@ -121,9 +125,8 @@ class << ENV
 
   def determine_cmake_prefix_path
     paths = deps.map{|dep| "#{HOMEBREW_PREFIX}/opt/#{dep}" }
+    paths << HOMEBREW_PREFIX.to_s # put ourselves ahead of everything else
     paths << "#{MacOS.sdk_path}/usr" if MacSystem.xcode43_without_clt?
-    paths << HOMEBREW_PREFIX.to_s # again always put ourselves ahead of X11
-    paths << MacSystem.x11_prefix if x11?
     paths.to_path_s
   end
 
@@ -132,8 +135,22 @@ class << ENV
     paths = []
     paths << "#{MacSystem.x11_prefix}/include/freetype2" if x11?
     paths << "#{sdk}/usr/include/libxml2" unless deps.include? 'libxml2'
-    # TODO prolly shouldn't always do this?
-    paths << "#{sdk}/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7" if MacSystem.xcode43_without_clt?
+    if MacSystem.xcode43_without_clt?
+      paths << "#{sdk}/usr/include/apache2"
+      # TODO prolly shouldn't always do this?
+      paths << "#{sdk}/System/Library/Frameworks/Python.framework/Versions/Current/include/python2.7"
+    end
+    paths << "#{sdk}/System/Library/Frameworks/OpenGL.framework/Versions/Current/Headers/"
+    paths << "#{MacSystem.x11_prefix}/include" if x11?
+    paths.to_path_s
+  end
+
+  def determine_cmake_library_path
+    sdk = MacOS.sdk_path if MacSystem.xcode43_without_clt?
+    paths = []
+    # things expect to find GL headers since X11 used to be a default, so we add them
+    paths << "#{sdk}/System/Library/Frameworks/OpenGL.framework/Versions/Current/Libraries"
+    paths << "#{MacSystem.x11_prefix}/lib" if x11?
     paths.to_path_s
   end
 
@@ -154,9 +171,11 @@ class << ENV
 
   def determine_cccfg
     s = ""
+    s << 'b' if ARGV.build_bottle?
     # Fix issue with sed barfing on unicode characters on Mountain Lion
     s << 's' if MacOS.mountain_lion?
-    s << 'b' if ARGV.build_bottle?
+    # Fix issue with 10.8 apr-1-config having broken paths
+    s << 'a' if MacOS.cat == :mountainlion
     s
   end
 
@@ -183,20 +202,40 @@ class << ENV
   end
   alias_method :j1, :deparallelize
   def gcc
-    ENV['CC'] = "gcc"
+    ENV['CC'] = ENV['HOMEBREW_CC'] = "gcc"
     ENV['CXX'] = "g++"
   end
   def llvm
-    ENV['CC'] = "llvm-gcc"
-    ENV['CXX'] = "llvm-g++"
+    ENV['CC'] = ENV['HOMEBREW_CC'] = "llvm-gcc"
+    ENV['CXX'] = "g++"
   end
   def clang
-    ENV['CC'] = "clang"
+    ENV['CC'] = ENV['HOMEBREW_CC'] = "clang"
     ENV['CXX'] = "clang++"
   end
   def make_jobs
     ENV['MAKEFLAGS'] =~ /-\w*j(\d)+/
     [$1.to_i, 1].max
+  end
+
+  # Many formula assume that CFLAGS etc. will not be nil.
+  # This should be a safe hack to prevent that exception cropping up.
+  # Main consqeuence of this is that ENV['CFLAGS'] is never nil even when it
+  # is which can break if checks, but we don't do such a check in our code.
+  def [] key
+    if has_key? key
+      fetch(key)
+    elsif %w{CPPFLAGS CFLAGS LDFLAGS}.include? key
+      class << (a = "")
+        attr :key, true
+        def + value
+          ENV[key] = value
+        end
+        alias_method '<<', '+'
+      end
+      a.key = key
+      a
+    end
   end
 
 end if superenv?
@@ -213,7 +252,7 @@ end
 
 class Array
   def to_path_s
-    map(&:to_s).select{|s| s and File.directory? s }.join(':').chuzzle
+    map(&:to_s).uniq.select{|s| File.directory? s }.join(':').chuzzle
   end
 end
 
