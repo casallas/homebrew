@@ -1,8 +1,8 @@
 require 'formula'
 
 class Cmake < Formula
-  url 'http://www.cmake.org/files/v2.8/cmake-2.8.7.tar.gz'
-  md5 'e1b237aeaed880f65dec9c20602452f6'
+  url 'http://www.cmake.org/files/v2.8/cmake-2.8.9.tar.gz'
+  sha1 'b96663c0757a5edfbddc410aabf7126a92131e2b'
   homepage 'http://www.cmake.org/'
 
   def install
@@ -23,5 +23,9 @@ class Cmake < Formula
                           "--mandir=/share/man"
     system "make"
     system "make install"
+  end
+
+  def test
+    system "#{bin}/cmake", "-E", "echo", "testing"
   end
 end
