@@ -1,14 +1,13 @@
 require 'formula'
 
-class Libjpeg < Formula
-  url 'http://www.ijg.org/files/jpegsrc.v8c.tar.gz'
+class Jpeg < Formula
+  url 'http://www.ijg.org/files/jpegsrc.v8d.tar.gz'
   homepage 'http://www.ijg.org/'
-  sha1 'f0a3b88ac4db19667798bee971537eeed552bce9'
-  version "8c"
-  # depends_on 'cmake'
+  sha1 'f080b2fffc7581f7d19b968092ba9ebc234556ff'
+  version "8d"
 
   def install
-    system "./configure", "--prefix=#{prefix}", "--mandir=#{man}"
+    system "./configure", "--prefix=#{prefix}", "--mandir=#{man}", "--disable-dependency-tracking"
     system "make install"
   end
 end
