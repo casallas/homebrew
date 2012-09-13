@@ -36,7 +36,7 @@ class Cleaner
 
       # strip unlinks the file and recreates it, thus breaking hard links!
       # is this expected behaviour? patch does it too… still, this fixes it
-      tmp = `#{SystemCommand.mktemp} -t homebrew_strip`.chomp
+      tmp = `#{SystemCommand.mktemp} -t homebrew_strip.XXX`.chomp
       begin
         `#{SystemCommand.strip} #{args} -o #{tmp} #{path}`
         `#{SystemCommand.cat} #{tmp} > #{path}`
@@ -74,8 +74,6 @@ class Cleaner
         next
       elsif path.extname == '.la'
         # *.la files are stupid
-        path.unlink unless @f.skip_clean? path
-      elsif path == @f.lib+'charset.alias'
         path.unlink unless @f.skip_clean? path
       elsif not path.symlink?
         clean_file path
