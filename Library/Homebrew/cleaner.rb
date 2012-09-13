@@ -60,8 +60,8 @@ class Cleaner
     when /ELF (.*) executable/
       strip path
       perms=0555
-    when /script text executable/
-      perms=0555
+    when /text executable/
+      perms = 0555
     end
     path.chmod perms
   end
