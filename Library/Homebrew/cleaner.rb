@@ -1,7 +1,7 @@
 class Cleaner
   def initialize f
-    @f=f
-    [f.bin, f.sbin, f.lib].select{|d|d.exist?}.each{|d|clean_dir d}
+    @f = Formula.factory f
+    [f.bin, f.sbin, f.lib].select{ |d| d.exist? }.each{ |d| clean_dir d }
 
     unless ENV['HOMEBREW_KEEP_INFO'].nil?
       f.info.rmtree if f.info.directory? and not f.skip_clean? f.info
@@ -23,7 +23,8 @@ class Cleaner
     end
   end
 
-private
+  private
+
   def strip path, args=''
     return if @f.skip_clean? path
     puts "strip #{path}" if ARGV.verbose?
@@ -46,7 +47,7 @@ private
   end
 
   def clean_file path
-    perms=0444
+    perms = 0444
     case `file -h '#{path}'`
     when /Mach-O dynamically linked shared library/
       # Stripping libraries is causing no end of trouble
@@ -55,7 +56,7 @@ private
       #strip path, '-SxX'
     when /Mach-O [^ ]* ?executable/
       strip path
-      perms=0555
+      perms = 0555
     when /ELF (.*) executable/
       strip path
       perms=0555
@@ -71,9 +72,9 @@ private
         Find.prune if @f.skip_clean? path
       elsif not path.file?
         next
-      elsif path.extname == '.la' and not @f.skip_clean? path
+      elsif path.extname == '.la'
         # *.la files are stupid
-        path.unlink
+        path.unlink unless @f.skip_clean? path
       elsif not path.symlink?
         clean_file path
       end
