@@ -2,8 +2,8 @@ require 'formula'
 
 class Wget < Formula
   homepage 'http://www.gnu.org/software/wget/'
-  url 'http://ftp.gnu.org/gnu/wget/wget-1.13.4.tar.bz2'
-  md5 '12115c3750a4d92f9c6ac62bac372e85'
+  url 'http://ftp.gnu.org/gnu/wget/wget-1.14.tar.gz'
+  sha1 'c487bce740b3a1847a35fb29b5c6700c46f639b8'
 
   depends_on "libidn" if ARGV.include? "--enable-iri"
 
@@ -21,5 +21,9 @@ class Wget < Formula
 
     system "./configure", *args
     system "make install"
+  end
+
+  def test
+    system "#{bin}/wget", "-O", "-", "www.google.com"
   end
 end
