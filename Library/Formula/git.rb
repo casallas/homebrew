@@ -60,9 +60,6 @@ class Git < Formula
   end
 
   def caveats; <<-EOS.undent
-    Bash completion has been installed to:
-      #{etc}/bash_completion.d
-
     The 'contrib' directory has been installed to:
       #{HOMEBREW_PREFIX}/share/git-core/contrib
     EOS
