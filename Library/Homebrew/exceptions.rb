@@ -1,0 +1,3 @@
+
+class NotAKegError < RuntimeError
+end
