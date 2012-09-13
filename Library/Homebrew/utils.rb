@@ -144,6 +144,15 @@ def puts_columns items, cols = 4
   end
 end
 
+def which cmd
+  path = `/usr/bin/which #{cmd}`.chomp
+  if path.empty?
+    nil
+  else
+    Pathname.new(path)
+  end
+end
+
 def exec_editor *args
   editor = ENV['HOMEBREW_EDITOR'] || ENV['EDITOR']
   if editor.nil?
