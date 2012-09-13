@@ -22,9 +22,9 @@ class OpenSceneGraph28 < Formula
   def install
     args = ["..", "-DCMAKE_INSTALL_PREFIX='#{prefix}'", "-DCMAKE_BUILD_TYPE=None", "-Wno-dev", "-DBUILD_OSG_WRAPPERS=ON", "-DBUILD_DOCUMENTATION=ON"]
 
-    if Formula.factory('collada').installed?
-      args << "-DCOLLADA_INCLUDE_DIR=#{HOMEBREW_PREFIX}/include/collada-dom"
-    end
+    #if Formula.factory('collada').installed?
+    #  args << "-DCOLLADA_INCLUDE_DIR=#{HOMEBREW_PREFIX}/include/collada-dom"
+    #end
 
     Dir.mkdir "build"
     Dir.chdir "build" do
@@ -32,7 +32,7 @@ class OpenSceneGraph28 < Formula
       system "make install"
     end
     # Libs are installed to /lib64 but we don't have that in homebrew, rename to /lib
-    File.rename "#{prefix}/lib64" "#{lib}"
+    File.rename "#{prefix}/lib64", "#{lib}"
   end
 
   def patches
