@@ -8,9 +8,9 @@ ARGV.extend(HomebrewArgvExtension)
 
 HOMEBREW_VERSION = '0.7.1'
 HOMEBREW_WWW = 'http://mxcl.github.com/homebrew/'
-HOMEBREW_GIT_URL = 'https://github.com/rubiojr/homebrew'
-HOMEBREW_GIT_USER = 'rubiojr'
-HOMEBREW_GIT_BRANCH = 'master'
+HOMEBREW_GIT_URL = 'https://github.com/jscasallas/homebrew'
+HOMEBREW_GIT_USER = 'jscasallas'
+HOMEBREW_GIT_BRANCH = 'linux'
 
 if SystemCommand.platform == :mac
   if Process.uid == 0
