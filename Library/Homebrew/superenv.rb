@@ -41,7 +41,7 @@ class << ENV
   def setup_build_environment
     reset
     check
-    ENV['CC'] = ENV['LD'] = 'cc'
+    ENV['CC'] = 'cc'
     ENV['CXX'] = 'c++'
     ENV['MAKEFLAGS'] ||= "-j#{determine_make_jobs}"
     ENV['PATH'] = determine_path
@@ -119,7 +119,7 @@ class << ENV
     # we put our paths before X because we dupe some of the X libraries
     paths << "#{MacSystem.x11_prefix}/lib/pkgconfig" << "#{MacSystem.x11_prefix}/share/pkgconfig" if x11?
     # Mountain Lion no longer ships some .pcs; ensure we pick up our versions
-    paths << "#{HOMEBREW_REPOSITORY}/Library/Homebrew/pkgconfig" if MacOS.mountain_lion?
+    paths << "#{HOMEBREW_REPOSITORY}/Library/Homebrew/pkgconfig" if MacOS.version >= :mountain_lion
     paths.to_path_s
   end
 
@@ -140,7 +140,7 @@ class << ENV
       # TODO prolly shouldn't always do this?
       paths << "#{sdk}/System/Library/Frameworks/Python.framework/Versions/Current/include/python2.7"
     end
-    paths << "#{sdk}/System/Library/Frameworks/OpenGL.framework/Versions/Current/Headers/"
+    paths << "#{sdk}/System/Library/Frameworks/OpenGL.framework/Versions/Current/Headers/" unless x11?
     paths << "#{MacSystem.x11_prefix}/include" if x11?
     paths.to_path_s
   end
@@ -149,7 +149,7 @@ class << ENV
     sdk = MacOS.sdk_path if MacSystem.xcode43_without_clt?
     paths = []
     # things expect to find GL headers since X11 used to be a default, so we add them
-    paths << "#{sdk}/System/Library/Frameworks/OpenGL.framework/Versions/Current/Libraries"
+    paths << "#{sdk}/System/Library/Frameworks/OpenGL.framework/Versions/Current/Libraries" unless x11?
     paths << "#{MacSystem.x11_prefix}/lib" if x11?
     paths.to_path_s
   end
@@ -173,9 +173,9 @@ class << ENV
     s = ""
     s << 'b' if ARGV.build_bottle?
     # Fix issue with sed barfing on unicode characters on Mountain Lion
-    s << 's' if MacOS.mountain_lion?
+    s << 's' if MacOS.version >= :mountain_lion
     # Fix issue with 10.8 apr-1-config having broken paths
-    s << 'a' if MacOS.cat == :mountainlion
+    s << 'a' if MacOS.version == :mountain_lion
     s
   end
 

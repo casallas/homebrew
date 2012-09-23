@@ -52,30 +52,18 @@ rescue Exception => e
   end
 end
 
-def pre_superenv_hacks f
-  # TODO replace with Formula DSL
-  # Python etc. build but then pip can't build stuff.
-  # Scons resets ENV and then can't find superenv's build-tools.
-  # In some cases we should only apply in the case of an option I suggest the
-  # following:
-  #
-  # option 'with-passenger' do
-  #   env :userpaths  # for superenv
-  # end
-  # option 'without-foo' do
-  #  env :std, :x11
-  # end
-  #
-  # NOTE I think all ENV stuff should be specified with a DSL like this now.
-  case f.name
-  when 'lilypond', 'nginx'
+def post_superenv_hacks f
+  # Only allow Homebrew-approved directories into the PATH, unless
+  # a formula opts-in to allowing the user's path.
+  if f.env.userpaths?
     paths = ORIGINAL_PATHS.map{|pn| pn.realpath.to_s rescue nil } - %w{/usr/X11/bin /opt/X11/bin}
     ENV['PATH'] = "#{ENV['PATH']}:#{paths.join(':')}"
   end
-  # fontforge needs 10.7 SDK, wine 32 bit, graphviz has mysteriously missing symbols
-  # and ruby/python etc. create gem/pip that then won't work
-  stdenvs = %w{fontforge python python3 ruby ruby-enterprise-edition jruby wine graphviz}
-  ARGV.unshift '--env=std' if (stdenvs.include?(f.name) or
+end
+
+def pre_superenv_hacks f
+  # Allow a formula to opt-in to the std environment.
+  ARGV.unshift '--env=std' if (f.env.std? or
     f.recursive_deps.detect{|d| d.name == 'scons' }) and
     not ARGV.include? '--env=super'
 end
@@ -112,6 +100,7 @@ def install f
     ENV.x11 = f.recursive_requirements.detect{|rq| rq.class == X11Dependency }
     ENV.setup_build_environment
     f.recursive_requirements.each { |rq| rq.modify_build_environment }
+    post_superenv_hacks(f)
   end
 
   if f.fails_with? ENV.compiler
@@ -141,6 +130,8 @@ def install f
     else
       f.prefix.mkpath
       f.install
+
+      # Find and link metafiles
       FORMULA_META_FILES.each do |filename|
         next if File.directory? filename
         target_file = filename
@@ -148,7 +139,7 @@ def install f
         # Some software symlinks these files (see help2man.rb)
         target_file = Pathname.new(target_file).resolved_path
         f.prefix.install target_file => filename rescue nil
-        (f.prefix+file).chmod 0644 rescue nil
+        (f.prefix/filename).chmod 0644 rescue nil
       end
     end
   end
