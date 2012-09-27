@@ -122,9 +122,6 @@ begin
         end
       end
 
-    when 'prune'
-      prune
-
     when 'info', 'abv'
       if ARGV.named.empty?
         if ARGV.include? "--all"
