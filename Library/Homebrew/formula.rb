@@ -1,6 +1,7 @@
 require 'download_strategy'
 require 'fileutils'
 
+
 class SoftwareSpecification
   attr_reader :url, :specs, :using
 
@@ -213,6 +214,22 @@ class Formula
     end
   end
 
+  def == b
+    name == b.name
+  end
+  def eql? b
+    self == b and self.class.equal? b.class
+  end
+  def hash
+    name.hash
+  end
+  def <=> b
+    name <=> b.name
+  end
+  def to_s
+    name
+  end
+
   # Standard parameters for CMake builds.
   # Using Build Type "None" tells cmake to use our CFLAGS,etc. settings.
   # Setting it to Release would ignore our flags.
@@ -256,15 +273,25 @@ class Formula
 
   # an array of all Formula, instantiated
   def self.all
-    all = []
+    map{ |f| f }
+  end
+  def self.map
+    rv = []
+    each{ |f| rv << yield(f) }
+    rv
+  end
+  def self.each
     names.each do |n|
       begin
-        all << Formula.factory(n)
+        yield Formula.factory(n)
       rescue
         # Don't let one broken formula break commands.
       end
     end
-    return all
+  end
+
+  def inspect
+    name
   end
 
   def self.aliases
@@ -310,8 +337,9 @@ class Formula
         install_type = :from_path
         target_file = path.to_s
       else
+        name = Formula.caniconical_name(name)
         # For names, map to the path and then require
-        require self.path(name)
+        require Formula.path(name)
         install_type = :from_name
       end
     end
@@ -334,7 +362,7 @@ class Formula
   end
 
   def self.path name
-    HOMEBREW_REPOSITORY+"Library/Formula/#{name.downcase}.rb"
+    HOMEBREW_REPOSITORY/"Library/Formula/#{name.downcase}.rb"
   end
 
   def deps
@@ -342,7 +370,20 @@ class Formula
   end
 
   def external_deps
-    self.class.external_deps
+    self.class.external_deps or {}
+  end
+
+  # deps are in an installable order
+  # which means if a depends on b then b will be ordered before a in this list
+  def recursive_deps
+    Formula.expand_deps(self).flatten.uniq
+  end
+
+  def self.expand_deps f
+    f.deps.map do |dep|
+      dep = Formula.factory dep
+      expand_deps(dep) << dep
+    end
   end
 
 protected
@@ -371,9 +412,6 @@ protected
         raise
       end
     end
-  rescue SystemCallError
-    # usually because exec could not be find the command that was requested
-    raise
   rescue
     raise BuildError.new(self, cmd, args, $?)
   end
