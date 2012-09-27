@@ -10,6 +10,19 @@ class FormulaUnavailableError < RuntimeError
   end
 end
 
+module Homebrew
+  class InstallationError < RuntimeError
+    attr :formula
+    def initialize formula
+      @formula = formula
+    end
+    def initialize formula, message
+      super message
+      @formula = formula
+    end
+  end
+end
+
 class BuildError < Homebrew::InstallationError
   attr :exit_status
   attr :command
