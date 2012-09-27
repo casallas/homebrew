@@ -23,6 +23,18 @@ module Homebrew
   end
 end
 
+class FormulaAlreadyInstalledError < Homebrew::InstallationError
+  def message
+    "Formula already installed: #{formula}"
+  end
+end
+
+class FormulaInstallationAlreadyAttemptedError < Homebrew::InstallationError
+  def message
+    "Formula installation already attempted: #{formula}"
+  end
+end
+
 class UnsatisfiedExternalDependencyError < Homebrew::InstallationError
   attr :type
 
