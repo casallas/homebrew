@@ -1,16 +1,6 @@
 require 'download_strategy'
 require 'fileutils'
 
-class FormulaUnavailableError <RuntimeError
-  def initialize name
-    @name = name
-    super "No available formula for #{name}"
-  end
-
-  attr_reader :name
-end
-
-
 class SoftwareSpecification
   attr_reader :url, :specs, :using
 

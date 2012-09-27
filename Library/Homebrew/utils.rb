@@ -25,15 +25,6 @@ class ExecutionError <RuntimeError
   end
 end
 
-class BuildError <ExecutionError
-  attr :env
-
-  def initialize cmd, args = [], es = nil
-    super
-    @env = ENV.to_hash
-  end
-end
-
 class Tty
   class <<self
     def blue; bold 34; end
