@@ -212,10 +212,6 @@ begin
       end
     end
 
-  when 'doctor', 'dr'
-    require 'brew_doctor'
-    brew_doctor
-
   else
     # Add example external commands to PATH before checking.
     ENV['PATH'] += ":#{HOMEBREW_REPOSITORY}/Library/Contributions/examples"
