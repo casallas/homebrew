@@ -125,9 +125,6 @@ begin
     when 'prune'
       prune
 
-    when 'diy', 'configure'
-      puts diy
-
     when 'info', 'abv'
       if ARGV.named.empty?
         if ARGV.include? "--all"
