@@ -14,6 +14,14 @@ def dump_build_env env
   Homebrew.dump_build_env env
 end
 
+def x11_installed?
+  if SystemCommand.platform == :linux
+    File.exist?(SystemCommand.which 'X')
+  else
+    MacOS.x11_installed?
+  end
+end
+
 def macports_or_fink_installed?
   if SystemCommand.platform == :linux
     return false

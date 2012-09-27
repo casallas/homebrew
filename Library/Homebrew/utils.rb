@@ -257,11 +257,11 @@ def nostdout
   end
 end
 
+module MacOS extend self
 def x11_installed?
-  File.exist?(SystemCommand.which 'X')
+  Pathname.new('/usr/X11/lib/libpng.dylib').exist?
 end
 
-module MacOS extend self
   def macports_or_fink_installed?
     # See these issues for some history:
     # http://github.com/mxcl/homebrew/issues/#issue/13
