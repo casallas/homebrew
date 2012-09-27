@@ -1,17 +1,14 @@
 require 'formula'
 
-class Libpng < Formula
-  url 'http://downloads.sourceforge.net/project/libpng/libpng15/1.5.4/lpng154.zip'
-  homepage 'http://www.ijg.org/'
-  sha1 'b4e3ef7d7f8421c42f46aab3f6ace98aeb6e6983'
-  version "1.5.4"
-  # depends_on 'cmake'
+class Libpng <Formula
+  url 'http://downloads.sourceforge.net/project/libpng/03-libpng-previous/1.2.44/libpng-1.2.44.tar.bz2'
+  homepage 'http://www.libpng.org/pub/png/libpng.html'
+  md5 'e3ac7879d62ad166a6f0c7441390d12b'
+
+  keg_only :provided_by_osx
 
   def install
-    system "cp scripts/makefile.linux Makefile"
-    system "make prefix=#{prefix} DM=#{man}"	
-    system "make install prefix=#{prefix} DM=#{man}"
+    system "./configure", "--disable-dependency-tracking", "--prefix=#{prefix}"
+    system "make install"
   end
 end
-
-

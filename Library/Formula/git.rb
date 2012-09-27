@@ -14,7 +14,6 @@ class Git < Formula
   url 'http://kernel.org/pub/software/scm/git/git-1.7.3.2.tar.bz2'
   md5 '902f7f07a789fedc0d2ac03656b85969'
   homepage 'http://git-scm.com'
-  depends_on 'expat'
 
   def install
     # if these things are installed, tell git build system to not use them
