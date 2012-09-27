@@ -3,6 +3,8 @@ require 'extend/ARGV'
 require 'extend/string'
 require 'utils'
 require 'system_command'
+require 'exceptions'
+require 'compatibility'
 
 ARGV.extend(HomebrewArgvExtension)
 
@@ -61,3 +63,11 @@ else
   RECOMMENDED_GCC_40 = 4
   RECOMMENDED_GCC_42 = 4
 end
+
+require 'fileutils'
+module Homebrew extend self
+  include FileUtils
+end
+
+FORMULA_META_FILES = %w[README README.md ChangeLog COPYING LICENSE LICENCE COPYRIGHT AUTHORS]
+PLEASE_REPORT_BUG = "#{Tty.white}Please follow the instructions to report this bug at: #{Tty.em}\n#{HOMEBREW_GIT_URL}/wiki/new-issue#{Tty.reset}"
