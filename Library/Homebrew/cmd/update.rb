@@ -1,8 +1,21 @@
+module Homebrew extend self
+  def update
+    abort "Please `brew install git' first." unless system "/usr/bin/which -s git"
+
+    updater = RefreshBrew.new
+    if updater.update_from_masterbrew!
+      updater.report
+    else
+      puts "Already up-to-date."
+    end
+  end
+end
+
 class RefreshBrew
-  REPOSITORY_URL   = "http://github.com/rubiojr/homebrew.git"
+  REPOSITORY_URL   = "#{HOMEBREW_GIT_URL}.git"
   INIT_COMMAND     = "git init"
-  CHECKOUT_COMMAND = "git checkout -q master"
-  UPDATE_COMMAND   = "git pull #{REPOSITORY_URL} master"
+  CHECKOUT_COMMAND = "git checkout -q #{HOMEBREW_GIT_BRANCH}"
+  UPDATE_COMMAND   = "git pull #{REPOSITORY_URL} #{HOMEBREW_GIT_BRANCH}"
   REVISION_COMMAND = "git log -l -1 --pretty=format:%H 2> /dev/null"
   GIT_UP_TO_DATE   = "Already up-to-date."
 
