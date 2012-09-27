@@ -261,7 +261,7 @@ class Formula
 
   # an array of all Formula names
   def self.names
-    Dir["#{FORMULA_REPOSITORY}/*.rb"].map{ |f| File.basename f, '.rb' }.sort
+    Dir["#{HOMEBREW_REPOSITORY}/Library/Formula/*.rb"].map{ |f| File.basename f, '.rb' }.sort
   end
 
   # an array of all Formula, instantiated
@@ -344,7 +344,7 @@ class Formula
   end
 
   def self.path name
-    "#{FORMULA_REPOSITORY}#{name.downcase}.rb"
+    HOMEBREW_REPOSITORY+"Library/Formula/#{name.downcase}.rb"
   end
 
   def deps
