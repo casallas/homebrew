@@ -375,7 +375,7 @@ protected
     # usually because exec could not be find the command that was requested
     raise
   rescue
-    raise BuildError.new(cmd, args, $?)
+    raise BuildError.new(self, cmd, args, $?)
   end
 
 private

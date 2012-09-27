@@ -1,29 +1,3 @@
-class ExecutionError <RuntimeError
-  attr :exit_status
-  attr :command
-
-  def initialize cmd, args = [], es = nil
-    @command = cmd
-    super "Failure while executing: #{cmd} #{pretty(args)*' '}"
-    @exit_status = es.exitstatus rescue 1
-  end
-
-  def was_running_configure?
-    @command == './configure'
-  end
-
-  private
-
-  def pretty args
-    args.collect do |arg|
-      if arg.to_s.include? ' '
-        "'#{ arg.gsub "'", "\\'" }'"
-      else
-        arg
-      end
-    end
-  end
-end
 
 class Tty
   class <<self
@@ -103,7 +77,10 @@ end
 
 # Kernel.system but with exceptions
 def safe_system cmd, *args
-  raise ExecutionError.new(cmd, args, $?) unless Homebrew.system(cmd, *args)
+  unless Homebrew.system cmd, *args
+    args = args.map{ |arg| arg.gsub " ", "\\ " } * " "
+    raise "Failure while executing: #{cmd} #{args}"
+  end
 end
 
 # prints no output
