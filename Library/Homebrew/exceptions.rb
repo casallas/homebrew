@@ -23,6 +23,51 @@ module Homebrew
   end
 end
 
+class UnsatisfiedExternalDependencyError < Homebrew::InstallationError
+  attr :type
+
+  def initialize formula, type
+    @type = type
+    @formula = formula
+  end
+
+  def message
+    <<-EOS.undent
+      Unsatisfied dependency: #{formula}
+      Homebrew does not provide #{type.to_s.capitalize} dependencies, #{tool} does:
+
+          #{command_line} #{formula}
+      EOS
+  end
+
+  private
+
+  def tool
+    case type
+      when :python then 'pip'
+      when :ruby, :jruby then 'rubygems'
+      when :perl then 'cpan'
+    end
+  end
+
+  def command_line
+    case type
+      when :python
+        "#{brew_pip}pip install"
+      when :ruby
+        "gem install"
+      when :perl
+        "cpan -i"
+      when :jruby
+        "jruby -S gem install"
+    end
+  end
+
+  def brew_pip
+    'brew install pip && ' unless Formula.factory('pip').installed?
+  end
+end
+
 class BuildError < Homebrew::InstallationError
   attr :exit_status
   attr :command

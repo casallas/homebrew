@@ -102,8 +102,8 @@ end
 
 class ExternalDepsTests < Test::Unit::TestCase
   def check_deps_fail f
-    assert_raises(RuntimeError) do
-      DontActuallyInstall.new.install f.new
+    assert_raises(UnsatisfiedExternalDependencyError) do
+      FormulaInstaller.check_external_deps f.new
     end
   end
 
