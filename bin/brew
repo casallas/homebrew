@@ -92,9 +92,6 @@ begin
       updater.report
     end
 
-    when 'unlink'
-      ARGV.kegs.each {|keg| puts "#{keg.unlink} links removed for #{keg}"}
-
     when 'info', 'abv'
       if ARGV.named.empty?
         if ARGV.include? "--all"
