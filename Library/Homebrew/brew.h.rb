@@ -57,29 +57,6 @@ def editmake url
   "#{FORMULA_REPOSITORY}#{name.downcase}.rb"
 end
 
-def issues_for_formula name
-  # bit basic as depends on the issue at github having the exact name of the
-  # formula in it. Which for stuff like objective-caml is unlikely. So we
-  # really should search for aliases too.
-
-  name = f.name if Formula === name
-
-  require 'open-uri'
-  require 'yaml'
-
-  issues = []
-
-  open("http://github.com/api/v2/yaml/issues/search/#{HOMEBREW_GIT_USER}/homebrew/open/"+name) do |f|
-    YAML::load(f.read)['issues'].each do |issue|
-      issues << "http://github.com/#{HOMEBREW_GIT_USER}/homebrew/issues/#issue/%s" % issue['number']
-    end
-  end
-
-  issues
-rescue
-  []
-end
-
 def clean f
   require 'cleaner'
   Cleaner.new f
