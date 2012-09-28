@@ -61,10 +61,6 @@ begin
       if ARGV.named.empty?
       elsif ARGV[0][0..6] == 'http://' or ARGV[0][0..7] == 'https://' or ARGV[0][0..5] == 'ftp://'
 
-  when 'install'
-    check_for_blacklisted_formula(ARGV.named)
-    brew_install
-
   when 'outdated'
     outdated_brews.each do |keg, name, version|
       if $stdout.tty? and not ARGV.flag? '--quiet'
