@@ -14,6 +14,38 @@ def dump_build_env env
   Homebrew.dump_build_env env
 end
 
+def gcc_42_build
+  plat = SystemCommand.platform
+  case plat
+  when :linux
+    5664
+  when :mac
+    MacOS.gcc_42_build_version
+  else
+    nil
+  end
+end
+
+alias :gcc_build :gcc_42_build
+
+def gcc_40_build
+  plat = SystemCommand.platform
+  case plat
+  when :linux
+    5664
+  when :mac
+    MacOS.gcc_40_build_version
+  else
+    nil
+  end
+end
+
+def llvm_build
+  if SystemCommand.platform == :mac
+    MacOS.llvm_build_version
+  end
+end
+
 def x11_installed?
   if SystemCommand.platform == :linux
     File.exist?(SystemCommand.which 'X')
