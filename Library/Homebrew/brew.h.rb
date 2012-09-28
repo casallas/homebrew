@@ -18,19 +18,6 @@ def editmake url
   "#{FORMULA_REPOSITORY}#{name.downcase}.rb"
 end
 
-def clean f
-  require 'cleaner'
-  Cleaner.new f
-
-  until paths.empty? do
-    d = paths.pop
-    if d.children.empty? and not f.skip_clean? d
-      puts "rmdir: #{d} (empty)" if ARGV.verbose?
-      d.rmdir
-    end
-  end
-end
-
 def xcode_version
   `xcodebuild -version 2>&1` =~ /Xcode (\d(\.\d)*)/
   return $1 ? $1 : nil
