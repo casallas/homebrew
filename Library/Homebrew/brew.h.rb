@@ -17,8 +17,3 @@ def editmake url
 
   "#{FORMULA_REPOSITORY}#{name.downcase}.rb"
 end
-
-def _compiler_recommendation build, recommended
-  message = (!build.nil? && build < recommended) ? "(#{recommended} or newer recommended)" : ""
-  return build, message
-end
