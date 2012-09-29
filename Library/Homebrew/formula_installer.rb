@@ -3,17 +3,6 @@ require 'formula'
 require 'set'
 
 class FormulaInstaller
-    f.external_deps[:python].each do |dep|
-      raise pyerr(dep) unless quiet_system SystemCommand.env, "python", "-c", "import #{dep}"
-    end
-    f.external_deps[:perl].each do |dep|
-      raise plerr(dep) unless quiet_system SystemCommand.env, "perl", "-e", "use #{dep}"
-    end
-    f.external_deps[:ruby].each do |dep|
-      raise rberr(dep) unless quiet_system SystemCommand.env, "ruby", "-rubygems", "-e", "require '#{dep}'"
-    end
-    f.external_deps[:jruby].each do |dep|
-      raise jrberr(dep) unless quiet_system SystemCommand.env, "jruby", "-rubygems", "-e", "require '#{dep}'"
   attr :ignore_deps, true
 
   def initialize f
