@@ -49,14 +49,8 @@ rescue LoadError => e
 end
 
 begin
-  require 'brew.h'
-
   case arg = ARGV.shift
 
-
-    end
-
-  else
     # Add example external commands to PATH before checking.
     ENV['PATH'] += ":#{HOMEBREW_REPOSITORY}/Library/Contributions/examples"
 
