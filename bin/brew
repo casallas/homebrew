@@ -39,6 +39,7 @@ if SystemCommand.platform == :mac
   if MACOS_VERSION < 10.5
     abort "Homebrew requires Leopard or higher. For Tiger support, see:\nhttp://github.com/sceaga/homebrew/tree/tiger"
   end
+end
 
 def require? path
   require path.to_s.chomp
@@ -49,32 +50,39 @@ rescue LoadError => e
 end
 
 begin
-  case arg = ARGV.shift
+  aliases = {'ls' => :list,
+             'homepage' => :home,
+             '-S' => :search,
+             'up' => :update,
+             'ln' => :link,
+             'rm' => :uninstall,
+             'remove' => :uninstall,
+             'configure' => :diy,
+             'abv' => :info,
+             'dr' => :doctor,
+             '--repo' => '--repository'}
 
-    # Add example external commands to PATH before checking.
-    ENV['PATH'] += ":#{HOMEBREW_REPOSITORY}/Library/Contributions/examples"
+  cmd = ARGV.shift
+  cmd = aliases[cmd] if aliases[cmd]
 
-    # Check for an external shell command
-    if system "#{SystemCommand.which_s} brew-#{arg}"
-      # Add some Homebrew vars to the ENV
-      %w(CACHE CELLAR LIBRARY_PATH PREFIX REPOSITORY).each do |e|
-        ENV["HOMEBREW_#{e}"] = eval("HOMEBREW_#{e}")
-      end
-      exec("brew-#{arg}", *ARGV)
+  # Add example external commands to PATH before checking.
+  ENV['PATH'] += ":#{HOMEBREW_REPOSITORY}/Library/Contributions/examples"
+
+  if system "#{SystemCommand.which_s} brew-#{cmd}"
+    %w[CACHE CELLAR LIBRARY_PATH PREFIX REPOSITORY].each do |e|
+      ENV["HOMEBREW_#{e}"] = eval "HOMEBREW_#{e}"
     end
-
-    # Check for an external ruby command
-    external_rb = `#{SystemCommand.which} brew-#{arg}.rb`.chomp
-    unless external_rb.empty?
-      require external_rb
-      exit 0
-    end
-
+    exec "brew-#{cmd}", *ARGV
+  elsif require? `#{SystemCommand.which} brew-#{cmd}.rb`
+    exit 0
+  elsif require? HOMEBREW_REPOSITORY/"Library/Homebrew/cmd"/cmd
+    Homebrew.send cmd.to_s.gsub('-', '_')
+  else
     # Check for git commands
-    if %w(branch checkout pull push rebase reset).include? arg
-      onoe "Unknown command '#{arg}' (did you mean 'git #{arg}'?)"
+    if %w[branch checkout pull push rebase reset].include? cmd
+      onoe "Unknown command: #{cmd} (did you mean `git #{cmd}'?)"
     else
-      onoe "Unknown command '#{arg}'"
+      onoe "Unknown command: #{cmd}"
     end
   end
 
@@ -98,6 +106,7 @@ rescue BuildError => e
   e.backtrace[1] =~ %r{Library/Formula/(.+)\.rb:(\d+)}
   formula_name = $1
   error_line = $2
+
   puts "Exit status: #{e.exit_status}"
   puts
   puts "http://github.com/mxcl/homebrew/blob/master/Library/Formula/#{formula_name}.rb#L#{error_line}"
