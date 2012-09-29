@@ -46,9 +46,6 @@ begin
 
   case arg = ARGV.shift
 
-    when 'info', 'abv'
-      if ARGV.named.empty?
-      elsif ARGV[0][0..6] == 'http://' or ARGV[0][0..7] == 'https://' or ARGV[0][0..5] == 'ftp://'
 
     end
 
