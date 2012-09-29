@@ -317,7 +317,7 @@ module GitHub extend self
 
     issues = []
 
-    open("http://github.com/api/v2/yaml/issues/search/#{HOMEBREW_GIT_USER}/homebrew/open/#{name}" do |f|
+    open "http://github.com/api/v2/yaml/issues/search/#{HOMEBREW_GIT_USER}/homebrew/open/#{name}" do |f|
       YAML::load(f.read)['issues'].each do |issue|
         issues << "http://github.com/#{HOMEBREW_GIT_USER}/homebrew/issues/#issue/%s" % issue['number']
       end
