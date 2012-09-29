@@ -55,7 +55,11 @@ module Homebrew
     end
 
     def self.ruby
-      `#{SystemCommand.which_s} ruby`.chomp
+      `#{SystemCommand.which} ruby`.chomp
+    end
+
+    def self.nice
+      `#{SystemCommand.which} nice`.chomp
     end
   end
 
