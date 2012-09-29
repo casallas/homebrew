@@ -46,17 +46,6 @@ begin
 
   case arg = ARGV.shift
 
-  when 'up', 'update'
-    abort "Please `brew install git' first." unless system "#{SystemCommand.which_s} git"
-
-    require 'update'
-    updater = RefreshBrew.new
-    unless updater.update_from_masterbrew!
-      puts "Already up-to-date."
-    else
-      updater.report
-    end
-
     when 'info', 'abv'
       if ARGV.named.empty?
       elsif ARGV[0][0..6] == 'http://' or ARGV[0][0..7] == 'https://' or ARGV[0][0..5] == 'ftp://'
