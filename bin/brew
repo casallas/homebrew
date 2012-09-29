@@ -39,6 +39,13 @@ if SystemCommand.platform == :mac
   if MACOS_VERSION < 10.5
     abort "Homebrew requires Leopard or higher. For Tiger support, see:\nhttp://github.com/sceaga/homebrew/tree/tiger"
   end
+
+def require? path
+  require path.to_s.chomp
+rescue LoadError => e
+  # HACK :( because we should raise on syntax errors but
+  # not if the file doesn't exist. TODO make robust!
+  raise unless e.to_s.include? path
 end
 
 begin
