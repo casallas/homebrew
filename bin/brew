@@ -68,12 +68,12 @@ begin
   # Add example external commands to PATH before checking.
   ENV['PATH'] += ":#{HOMEBREW_REPOSITORY}/Library/Contributions/examples"
 
-  if system "#{SystemCommand.which_s} brew-#{cmd}"
+  if system "#{SystemCommand.which_s} brew-#{cmd} 2>/dev/null"
     %w[CACHE CELLAR LIBRARY_PATH PREFIX REPOSITORY].each do |e|
       ENV["HOMEBREW_#{e}"] = eval "HOMEBREW_#{e}"
     end
     exec "brew-#{cmd}", *ARGV
-  elsif require? `#{SystemCommand.which} brew-#{cmd}.rb`
+  elsif require? `#{SystemCommand.which} brew-#{cmd}.rb 2>/dev/null`
     exit 0
   elsif require? HOMEBREW_REPOSITORY/"Library/Homebrew/cmd"/cmd
     Homebrew.send cmd.to_s.gsub('-', '_')
