@@ -1,10 +1,9 @@
 require 'formula'
 
-class Vrjuggler30 <Formula
-  head 'https://code.google.com/p/vrjuggler/', :using => :git
+class VrJuggler < Formula
+  head 'https://code.google.com/p/vrjuggler/', :using => :git, :branch => '3.0'
   homepage 'http://code.google.com/p/vrjuggler/'
-  url 'http://vrjuggler.googlecode.com/files/vrjuggler-3.0.0-1-src.tar.bz2'
-  sha1 '80d724b88afe0820a8eda9f293729eb050182830'
+  url 'https://code.google.com/p/vrjuggler/', :using => :git, :commit => '2f05d060da07'
   version '3.0.0-1'
 
   depends_on 'boost'
@@ -18,6 +17,8 @@ class Vrjuggler30 <Formula
   def options
     [['--with-debug', 'Build debug and release libraries.']]
   end
+
+  fails_with :clang
 
   def install
     #if Formula.factory('vrjuggler-2.2').installed?
@@ -53,7 +54,13 @@ class Vrjuggler30 <Formula
     ENV['AUTOCONF'] = "/usr/bin/autoconf"
     ENV['AUTOHEADER'] = "/usr/bin/autoheader"
     ENV['ACLOCAL'] = "/usr/bin/aclocal-1.10"
-    if not (ENV['HOMEBREW_USE_LLVM'] or ARGV.include? '--use-llvm')
+    if ENV['HOMEBREW_USE_CLANG'] or ARGV.include? '--use-clang'
+      ENV['CC'] = "clang"
+      ENV['CXX'] = "clang++"
+    elsif ENV['HOMEBREW_USE_LLVM'] or ARGV.include? '--use-llvm'
+      ENV['CC'] = "llvm-gcc"
+      ENV['CXX'] = "llvm-g++"
+    else
       ENV['CC'] = "gcc"
       ENV['CXX'] = "g++"
     end
