@@ -3,7 +3,7 @@ require 'formula'
 class VrJuggler < Formula
   head 'https://code.google.com/p/vrjuggler/', :using => :git, :branch => '3.0'
   homepage 'http://code.google.com/p/vrjuggler/'
-  url 'https://code.google.com/p/vrjuggler/', :using => :git, :commit => '2f05d060da07'
+  url 'https://code.google.com/p/vrjuggler/', :using => :git, :commit => '2f05d060da0749542daa1fa815bf2f95975052b7'
   version '3.0.0-1'
 
   depends_on 'boost'
