@@ -11,7 +11,7 @@ class OpenSceneGraph28 < Formula
   depends_on 'cmake' => :build
   depends_on 'jpeg'
   depends_on 'wget'
-  depends_on 'ffmpeg' => :optional
+  #depends_on 'ffmpeg' => :optional
   depends_on 'gdal' => :optional
   depends_on 'jasper' => :optional
   depends_on 'openexr' => :optional
