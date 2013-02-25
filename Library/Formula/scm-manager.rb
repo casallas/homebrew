@@ -2,18 +2,18 @@ require 'formula'
 
 class ScmManagerCliClient < Formula
   homepage 'http://www.scm-manager.org'
-  url 'http://maven.scm-manager.org/nexus/content/repositories/releases/sonia/scm/clients/scm-cli-client/1.20/scm-cli-client-1.20-jar-with-dependencies.jar'
-  version '1.20'
-  sha1 '1057c5977e90e0c036cd69c06d00a6a931c7f439'
+  url 'http://maven.scm-manager.org/nexus/content/repositories/releases/sonia/scm/clients/scm-cli-client/1.28/scm-cli-client-1.28-jar-with-dependencies.jar'
+  version '1.28'
+  sha1 '136415843fab877529969b16ff3d5673de90815e'
 end
 
 class ScmManager < Formula
   homepage 'http://www.scm-manager.org'
-  url 'http://maven.scm-manager.org/nexus/content/repositories/releases/sonia/scm/scm-server/1.20/scm-server-1.20-app.tar.gz'
-  version '1.20'
-  sha1 '3d309043cb815fe282c41894c8449943beb3e3de'
+  url 'http://maven.scm-manager.org/nexus/content/repositories/releases/sonia/scm/scm-server/1.28/scm-server-1.28-app.tar.gz'
+  version '1.28'
+  sha1 '1f02f7be9e5052d19cbda09782dfff86dff80979'
 
-  skip_clean :all
+  skip_clean 'libexec/var/log'
 
   def install
     rm_rf Dir['bin/*.bat']
@@ -24,6 +24,7 @@ class ScmManager < Formula
       #!/bin/bash
       BASEDIR="#{libexec}"
       REPO="#{libexec}/lib"
+      export JAVA_HOME=$(/usr/libexec/java_home -v 1.6)
       "#{libexec}/bin/scm-server" "$@"
     EOS
     chmod 0755, bin/'scm-server'
@@ -39,38 +40,24 @@ class ScmManager < Formula
     chmod 0755, scmCliClient
   end
 
-  def caveats; <<-EOS.undent
-    If this is your first install, automatically load on login with:
-        mkdir -p ~/Library/LaunchAgents
-        cp #{plist_path} ~/Library/LaunchAgents/
-        launchctl load -w ~/Library/LaunchAgents/#{plist_path.basename}
+  plist_options :manual => 'scm-server start'
 
-    If this is an upgrade and you already have the #{plist_path.basename} loaded:
-        launchctl unload -w ~/Library/LaunchAgents/#{plist_path.basename}
-        cp #{plist_path} ~/Library/LaunchAgents/
-        launchctl load -w ~/Library/LaunchAgents/#{plist_path.basename}
-
-    Or start manually:
-      scm-server start
+  def plist; <<-EOS.undent
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+      <dict>
+        <key>Label</key>
+        <string>#{plist_name}</string>
+        <key>ProgramArguments</key>
+        <array>
+          <string>#{opt_prefix}/bin/scm-server</string>
+          <string>start</string>
+        </array>
+        <key>RunAtLoad</key>
+        <true/>
+      </dict>
+    </plist>
     EOS
-  end
-
-def startup_plist; <<-EOS
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-  <dict>
-    <key>Label</key>
-    <string>#{plist_name}</string>
-    <key>ProgramArguments</key>
-    <array>
-      <string>#{bin}/scm-server</string>
-      <string>start</string>
-    </array>
-    <key>RunAtLoad</key>
-    <true/>
-  </dict>
-</plist>
-EOS
   end
 end

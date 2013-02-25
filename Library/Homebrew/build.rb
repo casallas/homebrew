@@ -13,6 +13,7 @@ at_exit do
 end
 
 require 'global'
+require 'debrew' if ARGV.debug?
 
 def main
   # The main Homebrew process expects to eventually see EOF on the error
@@ -42,6 +43,7 @@ def main
   install(Formula.factory($0))
 rescue Exception => e
   unless error_pipe.nil?
+    e.continuation = nil if ARGV.debug?
     Marshal.dump(e, error_pipe)
     error_pipe.close
     exit! 1
@@ -55,37 +57,53 @@ end
 def post_superenv_hacks f
   # Only allow Homebrew-approved directories into the PATH, unless
   # a formula opts-in to allowing the user's path.
-  if f.env.userpaths?
-    paths = ORIGINAL_PATHS.map{|pn| pn.realpath.to_s rescue nil } - %w{/usr/X11/bin /opt/X11/bin}
-    ENV['PATH'] = "#{ENV['PATH']}:#{paths.join(':')}"
+  if f.env.userpaths? or f.recursive_requirements.any? { |rq| rq.env.userpaths? }
+    ENV.userpaths!
   end
 end
 
 def pre_superenv_hacks f
   # Allow a formula to opt-in to the std environment.
   ARGV.unshift '--env=std' if (f.env.std? or
-    f.recursive_deps.detect{|d| d.name == 'scons' }) and
+    f.recursive_dependencies.detect{|d| d.name == 'scons' }) and
     not ARGV.include? '--env=super'
 end
 
+def expand_deps f
+  f.recursive_dependencies do |dependent, dep|
+    if dep.optional? || dep.recommended?
+      Dependency.prune unless dependent.build.with?(dep.name)
+    elsif dep.build?
+      Dependency.prune unless dependent == f
+    end
+  end.map(&:to_formula)
+end
+
 def install f
-  deps = f.recursive_deps
-  keg_only_deps = deps.select{|dep| dep.keg_only? }
+  deps = expand_deps(f)
+  keg_only_deps = deps.select(&:keg_only?)
 
   pre_superenv_hacks(f)
   require 'superenv'
 
-  unless superenv?
-    ENV.setup_build_environment
-    # Requirements are processed first so that adjustments made to ENV
-    # for keg-only deps take precdence.
-    f.recursive_requirements.each { |rq| rq.modify_build_environment }
-  end
-
   deps.each do |dep|
     opt = HOMEBREW_PREFIX/:opt/dep
-    fixopt(dep) unless opt.directory?
-    if not superenv? and dep.keg_only?
+    fixopt(dep) unless opt.directory? or ARGV.ignore_deps?
+  end
+
+  if superenv?
+    ENV.deps = keg_only_deps.map(&:to_s)
+    ENV.all_deps = deps.map(&:to_s)
+    ENV.x11 = f.recursive_requirements.detect { |rq| rq.kind_of?(X11Dependency) }
+    ENV.setup_build_environment
+    post_superenv_hacks(f)
+    f.recursive_requirements.each(&:modify_build_environment)
+  else
+    ENV.setup_build_environment
+    f.recursive_requirements.each(&:modify_build_environment)
+
+    keg_only_deps.each do |dep|
+      opt = dep.opt_prefix
       ENV.prepend_path 'PATH', "#{opt}/bin"
       ENV.prepend_path 'PKG_CONFIG_PATH', "#{opt}/lib/pkgconfig"
       ENV.prepend_path 'PKG_CONFIG_PATH', "#{opt}/share/pkgconfig"
@@ -94,15 +112,6 @@ def install f
       ENV.prepend 'LDFLAGS', "-L#{opt}/lib" if (opt/:lib).directory?
       ENV.prepend 'CPPFLAGS', "-I#{opt}/include" if (opt/:include).directory?
     end
-  end
-
-  if superenv?
-    ENV.deps = keg_only_deps.map(&:to_s)
-    ENV.all_deps = f.recursive_deps.map(&:to_s)
-    ENV.x11 = f.recursive_requirements.detect{|rq| rq.class == X11Dependency }
-    ENV.setup_build_environment
-    f.recursive_requirements.each { |rq| rq.modify_build_environment }
-    post_superenv_hacks(f)
   end
 
   if f.fails_with? ENV.compiler
@@ -130,18 +139,19 @@ def install f
       interactive_shell f
     else
       f.prefix.mkpath
-      f.install
+
+      begin
+        f.install
+      rescue Exception => e
+        if ARGV.debug?
+          debrew e, f
+        else
+          raise e
+        end
+      end
 
       # Find and link metafiles
-      FORMULA_META_FILES.each do |filename|
-        next if File.directory? filename
-        target_file = filename
-        target_file = "#{filename}.txt" if File.exists? "#{filename}.txt"
-        # Some software symlinks these files (see help2man.rb)
-        target_file = Pathname.new(target_file).resolved_path
-        f.prefix.install target_file => filename rescue nil
-        (f.prefix/filename).chmod 0644 rescue nil
-      end
+      f.prefix.install_metafiles Pathname.pwd
     end
   end
 end

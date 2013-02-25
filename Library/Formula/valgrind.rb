@@ -9,7 +9,7 @@ class Valgrind < Formula
     sha1 'aa7a3b0b9903f59a11ae518874852e8ccb12751c'
   else
     url "http://valgrind.org/downloads/valgrind-3.6.1.tar.bz2"
-    md5 "2c3aa122498baecc9d69194057ca88f5"
+    sha1 "6116ddca2708f56e0a2851bdfbe88e01906fa300"
   end
 
   head 'svn://svn.valgrind.org/valgrind/trunk'
@@ -20,7 +20,9 @@ class Valgrind < Formula
     depends_on :libtool
   end
 
-  skip_clean 'lib'
+  # Valgrind needs vcpreload_core-*-darwin.so to have execute permissions.
+  # See #2150 for more information.
+  skip_clean 'lib/valgrind'
 
   def patches
     # 1: For Xcode-only systems, we have to patch hard-coded paths, use xcrun &

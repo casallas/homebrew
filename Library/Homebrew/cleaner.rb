@@ -26,7 +26,13 @@ class Cleaner
     # We want post-order traversal, so use a stack.
     paths = []
     f.prefix.find do |path|
-      paths << path if path.directory?
+      if path.directory?
+        if f.skip_clean? path
+          Find.prune
+        else
+          paths << path
+        end
+      end
     end
 
     paths.each do |d|
@@ -45,6 +51,12 @@ class Cleaner
       0555
     else
       0444
+    end
+    if ARGV.debug?
+      old_perms = path.stat.mode
+      if perms != old_perms
+        puts "Fixing #{path} permissions from #{old_perms.to_s(8)} to #{perms.to_s(8)}"
+      end
     end
     path.chmod perms
   end

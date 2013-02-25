@@ -2,8 +2,8 @@ require 'formula'
 
 class Thrift < Formula
   homepage 'http://thrift.apache.org'
-  url 'http://www.apache.org/dyn/closer.cgi?path=thrift/0.8.0/thrift-0.8.0.tar.gz'
-  sha1 '1d652d7078d9cc70e2a45d3119b13e86ebd446da'
+  url 'http://www.apache.org/dyn/closer.cgi?path=thrift/0.9.0/thrift-0.9.0.tar.gz'
+  sha1 'fefcf4d729bf80da419407dfa028740aa95fa2e3'
 
   head 'http://svn.apache.org/repos/asf/thrift/trunk'
 
@@ -14,6 +14,11 @@ class Thrift < Formula
   option "with-php", "Install Php binding"
 
   depends_on 'boost'
+
+  # Includes are fixed in the upstream. Please remove this patch in the next version > 0.9.0
+  def patches
+    DATA
+  end
 
   def install
     # No reason for this step is known. On Lion at least the pkg.m4 doesn't
@@ -44,14 +49,30 @@ class Thrift < Formula
   end
 
   def caveats; <<-EOS.undent
-    Most language bindings were not installed. You may like to do the
-    following:
+    To install Python bindings:
+      pip install thrift
 
+    To install Ruby bindings:
       gem install thrift
-      easy_install thrift
 
-    If anyone figures out the steps to reliably build a set of bindings, please
-    open a pull request.
+    To install PHP bindings:
+      export PHP_PREFIX=/path/to/homebrew/thrift/0.9.0/php
+      export PHP_CONFIG_PREFIX=/path/to/homebrew/thrift/0.9.0/php_extensions
+      brew install thrift --with-php
     EOS
   end
 end
+__END__
+diff --git a/lib/cpp/src/thrift/transport/TSocket.h b/lib/cpp/src/thrift/transport/TSocket.h
+index ff5e541..65e6aea 100644
+--- a/lib/cpp/src/thrift/transport/TSocket.h
++++ b/lib/cpp/src/thrift/transport/TSocket.h
+@@ -21,6 +21,8 @@
+ #define _THRIFT_TRANSPORT_TSOCKET_H_ 1
+
+ #include <string>
++#include <sys/socket.h>
++#include <arpa/inet.h>
+
+ #include "TTransport.h"
+ #include "TVirtualTransport.h"
