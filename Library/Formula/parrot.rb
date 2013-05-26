@@ -6,8 +6,8 @@ class Parrot < Formula
   sha256 '40c7176059e4462c722511a29450a4b80867a8459e273b602fbeaac2a22457f9'
 
   devel do
-    url 'ftp://ftp.parrot.org/pub/parrot/releases/devel/4.11.0/parrot-4.11.0.tar.bz2'
-    sha256 '0632ad0ca9557df391088bddbbc2608a4503adb5679dcbe62c065a73d4ce49de'
+    url 'ftp://ftp.parrot.org/pub/parrot/releases/devel/5.3.0/parrot-5.3.0.tar.bz2'
+    sha256 '4cff32521c79d8a783ad57d9a13e205ea3c1b1585085e0da80138b58b77d0ed5'
   end
 
   head 'https://github.com/parrot/parrot.git'
@@ -15,6 +15,8 @@ class Parrot < Formula
   depends_on 'gmp' => :optional
   depends_on 'icu4c' => :optional
   depends_on 'pcre' => :optional
+  depends_on 'readline' => :optional
+  depends_on 'libffi' => :optional
 
   def install
     system "perl", "Configure.pl", "--prefix=#{prefix}",

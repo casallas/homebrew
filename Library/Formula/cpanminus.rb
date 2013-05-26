@@ -2,8 +2,8 @@ require 'formula'
 
 class Cpanminus < Formula
   homepage 'https://github.com/miyagawa/cpanminus'
-  url 'https://github.com/miyagawa/cpanminus/tarball/1.5021'
-  sha1 '0b750b3dd21c85f83e907ad63fa5093b57944cc4'
+  url 'https://github.com/miyagawa/cpanminus/archive/1.6915.tar.gz'
+  sha1 'cab5073c8ef7f9317d0d7fac6514c1f2d568d15f'
 
   head 'https://github.com/miyagawa/cpanminus.git'
 

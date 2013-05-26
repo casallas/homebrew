@@ -22,6 +22,20 @@ class NoSuchKegError < RuntimeError
   end
 end
 
+class FormulaValidationError < StandardError
+  attr_reader :attr
+
+  def initialize(attr, value)
+    @attr = attr
+    msg = "invalid attribute: #{attr}"
+    msg << " (#{value.inspect})" unless value.empty?
+    super msg
+  end
+end
+
+class FormulaSpecificationError < StandardError
+end
+
 class FormulaUnavailableError < RuntimeError
   attr_reader :name
   attr_accessor :dependent
@@ -69,6 +83,9 @@ module Homebrew
 end
 
 class CannotInstallFormulaError < RuntimeError
+end
+
+class FormulaAlreadyInstalledError < RuntimeError
 end
 
 class FormulaInstallationAlreadyAttemptedError < Homebrew::InstallationError
@@ -139,6 +156,26 @@ class BuildError < Homebrew::InstallationError
     unless issues.empty?
       puts "These open issues may also help:"
       puts issues.map{ |s| "    #{s}" }.join("\n")
+    end
+  end
+end
+
+# raised by CompilerSelector if the formula fails with all of
+# the compilers available on the user's system
+class CompilerSelectionError < StandardError
+  def message
+    if MacOS.version > :tiger then <<-EOS.undent
+      This formula cannot be built with any available compilers.
+      To install this formula, you may need to:
+        brew tap homebrew/dupes
+        brew install apple-gcc42
+      EOS
+    # tigerbrew has a separate apple-gcc42 for Xcode 2.5
+    else <<-EOS.undent
+      This formula cannot be built with any available compilers.
+      To install this formula, you need to:
+        brew install apple-gcc42
+      EOS
     end
   end
 end

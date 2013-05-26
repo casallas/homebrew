@@ -42,7 +42,7 @@ module Homebrew extend self
   def check_xcode
     require 'cmd/doctor'
     checks = Checks.new
-    %w{check_for_latest_xcode check_xcode_license_approved}.each do |check|
+    %w{check_xcode_clt check_xcode_license_approved}.each do |check|
       out = checks.send(check)
       opoo out unless out.nil?
     end
@@ -91,6 +91,8 @@ module Homebrew extend self
   rescue FormulaInstallationAlreadyAttemptedError
     # We already attempted to install f as part of the dependency tree of
     # another formula. In that case, don't generate an error, just move on.
+  rescue FormulaAlreadyInstalledError => e
+    opoo e.message
   rescue CannotInstallFormulaError => e
     ofail e.message
   end

@@ -6,19 +6,20 @@ require 'formula'
 # `brew install python`.
 
 class Distribute < Formula
-  url 'http://pypi.python.org/packages/source/d/distribute/distribute-0.6.34.tar.gz'
-  sha1 'b6f9cfbaf3e63833b71009812a613be13e68f5de'
+  url 'https://pypi.python.org/packages/source/d/distribute/distribute-0.6.40.tar.gz'
+  sha1 '46654be10177014bbb502a4c516627173de67d15'
 end
 
 class Pip < Formula
-  url 'http://pypi.python.org/packages/source/p/pip/pip-1.2.1.tar.gz'
-  sha1 '35db84983ef3f66a8a161d320e61d192afc233d9'
+  url 'https://pypi.python.org/packages/source/p/pip/pip-1.3.1.tar.gz'
+  sha1 '9c70d314e5dea6f41415af814056b0f63c3ffd14'
 end
+
 
 class Python3 < Formula
   homepage 'http://www.python.org/'
-  url 'http://python.org/ftp/python/3.3.0/Python-3.3.0.tar.bz2'
-  sha1 '3e1464bc2c1dfa74287bc58da81168f50b0ae5c7'
+  url 'http://python.org/ftp/python/3.3.2/Python-3.3.2.tar.bz2'
+  sha1 'b28c36a9752b690059dc6df4fb9b4ec9d6c5708a'
   VER='3.3'  # The <major>.<minor> is used so often.
 
   depends_on 'pkg-config' => :build
@@ -49,6 +50,19 @@ class Python3 < Formula
     prefix/"Frameworks/Python.framework/Versions/#{VER}/lib"
   end
 
+  fails_with :llvm do
+    build '2336'
+    cause <<-EOS.undent
+      Could not find platform dependent libraries <exec_prefix>
+      Consider setting $PYTHONHOME to <prefix>[:<exec_prefix>]
+      python.exe(14122) malloc: *** mmap(size=7310873954244194304) failed (error code=12)
+      *** error: can't allocate region
+      *** set a breakpoint in malloc_error_break to debug
+      Could not import runpy module
+      make: *** [pybuilddir.txt] Segmentation fault: 11
+    EOS
+  end
+
   def install
     # Unset these so that installing pip and distribute puts them where we want
     # and not into some other Python the user has installed.
@@ -73,7 +87,9 @@ class Python3 < Formula
     distutils_fix_stdenv
 
     # Python does not need all of X11, these bundled Headers are enough
-    ENV.append 'CPPFLAGS', "-I#{MacOS.sdk_path}/System/Library/Frameworks/Tk.framework/Versions/8.5/Headers" unless MacOS::CLT.installed?
+    unless MacOS::CLT.installed?
+      ENV.append 'CPPFLAGS', "-I#{MacOS.sdk_path}/System/Library/Frameworks/Tk.framework/Versions/8.5/Headers"
+    end
 
     # Allow sqlite3 module to load extensions: http://docs.python.org/library/sqlite3.html#f1
     inreplace "setup.py", 'sqlite_defines.append(("SQLITE_OMIT_LOAD_EXTENSION", "1"))', 'pass'
@@ -119,7 +135,7 @@ class Python3 < Formula
     # Install distribute for python3 and assure there's no name clash
     # with what the python (2.x) formula installs.
     scripts_folder.mkpath
-    setup_args = ["-s", "setup.py", "install", "--force", "--verbose", "--install-lib=#{site_packages_cellar}", "--install-scripts=#{bin}" ]
+    setup_args = ["-s", "setup.py", "install", "--force", "--verbose", "--install-lib=#{site_packages_cellar}", "--install-scripts=#{bin}"]
     Distribute.new.brew { system "#{bin}/python#{VER}", *setup_args }
     mv bin/'easy_install', bin/'easy_install3'
     Pip.new.brew { system "#{bin}/python#{VER}", *setup_args }

@@ -6,8 +6,8 @@ class Lilypond < Formula
   sha1 '1eb3b0e5c117a8669dba19ab28f933351e51e39a'
 
   devel do
-    url  'http://download.linuxaudio.org/lilypond/source/v2.17/lilypond-2.17.12.tar.gz'
-    sha1 'e7a2cbcae2e92955104c8f69835f8364ac0aecd9'
+    url  'http://download.linuxaudio.org/lilypond/source/v2.17/lilypond-2.17.18.tar.gz'
+    sha1 'c7a400e904e291583b4cfc89bf87854e42a46858'
   end
 
   env :std
@@ -40,7 +40,6 @@ class Lilypond < Formula
   end
 
   fails_with :clang do
-    build 425
     cause 'Strict C99 compliance error in a pointer conversion.'
   end
 
@@ -70,7 +69,6 @@ class Lilypond < Formula
       \\header { title = "Do-Re-Mi" }
       { c' d' e' }
     EOS
-    lilykeg = Formula.factory('lilypond').linked_keg
-    system "#{lilykeg}/bin/lilypond test.ly"
+    system "#{bin}/lilypond", "test.ly"
   end
 end

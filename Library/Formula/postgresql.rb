@@ -2,8 +2,8 @@ require 'formula'
 
 class Postgresql < Formula
   homepage 'http://www.postgresql.org/'
-  url 'http://ftp.postgresql.org/pub/source/v9.2.3/postgresql-9.2.3.tar.bz2'
-  sha1 'fe46685c36f6a7a04edd67be5695b4f5acebedff'
+  url 'http://ftp.postgresql.org/pub/source/v9.2.4/postgresql-9.2.4.tar.bz2'
+  sha1 '75b53c884cb10ed9404747b51677358f12082152'
 
   depends_on 'readline'
   depends_on 'libxml2' if MacOS.version == :leopard # Leopard libxml is too old
@@ -31,17 +31,19 @@ class Postgresql < Formula
   def install
     ENV.libxml2 if MacOS.version >= :snow_leopard
 
-    args = ["--disable-debug",
-            "--prefix=#{prefix}",
-            "--datadir=#{share}/#{name}",
-            "--docdir=#{doc}",
-            "--enable-thread-safety",
-            "--with-bonjour",
-            "--with-gssapi",
-            "--with-krb5",
-            "--with-openssl",
-            "--with-libxml",
-            "--with-libxslt"]
+    args = %W[
+      --disable-debug
+      --prefix=#{prefix}
+      --datadir=#{share}/#{name}
+      --docdir=#{doc}
+      --enable-thread-safety
+      --with-bonjour
+      --with-gssapi
+      --with-krb5
+      --with-openssl
+      --with-libxml
+      --with-libxslt
+    ]
 
     args << "--with-ossp-uuid" if build.with? 'ossp-uuid'
     args << "--with-python" unless build.include? 'no-python'
@@ -137,20 +139,16 @@ class Postgresql < Formula
       http://www.postgresql.org/docs/9.2/static/kernel-resources.html#SYSVIPC
     EOS
 
-    if MacOS.prefer_64_bit? then
-      s << <<-EOS.undent
-
-      To install postgresql (and ossp-uuid) in 32-bit mode:
-         brew install postgresql --32-bit
-
-      If you want to install the postgres gem, including ARCHFLAGS is recommended:
-          env ARCHFLAGS="-arch x86_64" gem install pg
-
-      To install gems without sudo, see the Homebrew wiki.
-      EOS
-    end
-
+    s << gem_caveats if MacOS.prefer_64_bit?
     return s
+  end
+
+  def gem_caveats; <<-EOS.undent
+    When installing the postgres gem, including ARCHFLAGS is recommended:
+      ARCHFLAGS="-arch x86_64" gem install pg
+
+    To install gems without sudo, see the Homebrew wiki.
+    EOS
   end
 
   plist_options :manual => "pg_ctl -D #{HOMEBREW_PREFIX}/var/postgres -l #{HOMEBREW_PREFIX}/var/postgres/server.log start"
@@ -174,8 +172,6 @@ class Postgresql < Formula
       </array>
       <key>RunAtLoad</key>
       <true/>
-      <key>UserName</key>
-      <string>#{`whoami`.chomp}</string>
       <key>WorkingDirectory</key>
       <string>#{HOMEBREW_PREFIX}</string>
       <key>StandardErrorPath</key>
