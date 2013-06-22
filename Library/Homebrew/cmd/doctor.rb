@@ -232,6 +232,25 @@ def __check_clt_up_to_date
   end
 end
 
+def check_for_osx_gcc_installer
+  if (MacOS.version < 10.7 || MacOS::Xcode.version < "4.1") && \
+    MacOS.clang_version == "2.1" then <<-EOS.undent
+    You have osx-gcc-installer installed.
+    Homebrew doesn't support osx-gcc-installer, and it is known to cause
+    some builds to fail.
+    Please install Xcode #{MacOS::Xcode.latest_version}.
+    EOS
+  end
+end
+
+def check_for_unsupported_osx
+  if MacOS.version > 10.8 then <<-EOS.undent
+    You are using Mac OS X #{MacOS.version}.
+    We do not yet provide support for this (unreleased) version.
+    EOS
+  end
+end
+
 def check_for_stray_developer_directory
   # if the uninstaller script isn't there, it's a good guess neither are
   # any troublesome leftover Xcode files
@@ -687,8 +706,22 @@ def check_filesystem_case_sensitive
   EOS
 end
 
+def __check_git_version
+  # https://help.github.com/articles/https-cloning-errors
+  `git --version`.chomp =~ /git version ((?:\d+\.?)+)/
+
+  if Version.new($1) < Version.new("1.7.10") then <<-EOS.undent
+    An outdated version of Git was detected in your PATH.
+    Git 1.7.10 or newer is required to perform checkouts over HTTPS from GitHub.
+    Please upgrade: brew upgrade git
+    EOS
+  end
+end
+
 def check_for_git
-  unless which "git" then <<-EOS.undent
+  if which "git"
+    __check_git_version
+  else <<-EOS.undent
     Git could not be found in your PATH.
     Homebrew uses Git for several internal functions, and some formulae use Git
     checkouts instead of stable tarballs. You may want to install Git:
@@ -715,13 +748,13 @@ def check_git_newline_settings
   end
 end
 
-def check_for_git_origin
-  return unless which "git"
-  # otherwise this will nag users with no repo about their remote
-  return unless (HOMEBREW_REPOSITORY/'.git').exist?
+def check_git_origin
+  return unless which('git') && (HOMEBREW_REPOSITORY/'.git').exist?
 
   HOMEBREW_REPOSITORY.cd do
-    if `git config --get remote.origin.url`.chomp.empty? then <<-EOS.undent
+    origin = `git config --get remote.origin.url`.strip
+
+    if origin.empty? then <<-EOS.undent
       Missing git origin remote.
 
       Without a correctly configured origin, Homebrew won't update
@@ -729,21 +762,7 @@ def check_for_git_origin
         cd #{HOMEBREW_REPOSITORY}
         git remote add origin https://github.com/mxcl/homebrew.git
       EOS
-    end
-  end
-end
-
-def check_the_git_origin
-  return unless which "git"
-  return if check_for_git_origin
-
-  # otherwise this will nag users with no repo about their remote
-  return unless (HOMEBREW_REPOSITORY/'.git').exist?
-
-  HOMEBREW_REPOSITORY.cd do
-    origin = `git config --get remote.origin.url`.chomp
-
-    unless origin =~ /mxcl\/homebrew(\.git)?$/ then <<-EOS.undent
+    elsif origin !~ /mxcl\/homebrew(\.git)?$/ then <<-EOS.undent
       Suspicious git origin remote found.
 
       With a non-standard origin, Homebrew won't pull updates from
@@ -886,32 +905,19 @@ def check_git_status
   end
 end
 
-def check_for_leopard_ssl
-  if MacOS.version == :leopard and not ENV['GIT_SSL_NO_VERIFY']
-    <<-EOS.undent
-      The version of libcurl provided with Mac OS X Leopard has outdated
-      SSL certificates.
+def check_git_ssl_verify
+  if MacOS.version <= :leopard && !ENV['GIT_SSL_NO_VERIFY'] then <<-EOS.undent
+    The version of libcurl provided with Mac OS X #{MacOS.version} has outdated
+    SSL certificates.
 
-      This can cause problems when running Homebrew commands that use Git to
-      fetch over HTTPS, e.g. `brew update` or installing formulae that perform
-      Git checkouts.
+    This can cause problems when running Homebrew commands that use Git to
+    fetch over HTTPS, e.g. `brew update` or installing formulae that perform
+    Git checkouts.
 
-      You can force Git to ignore these errors by setting GIT_SSL_NO_VERIFY.
-        export GIT_SSL_NO_VERIFY=1
-    EOS
-  end
-end
-
-def check_git_version
-  # https://help.github.com/articles/https-cloning-errors
-  return unless which "git"
-
-  `git --version`.chomp =~ /git version ((?:\d+\.?)+)/
-
-  if Version.new($1) < Version.new("1.7.10") then <<-EOS.undent
-    An outdated version of Git was detected in your PATH.
-    Git 1.7.10 or newer is required to perform checkouts over HTTPS from GitHub.
-    Please upgrade: brew upgrade git
+    You can force Git to ignore these errors:
+      export GIT_SSL_NO_VERIFY=1
+    or
+      git config --global http.sslVerify false
     EOS
   end
 end
@@ -922,6 +928,26 @@ def check_for_enthought_python
     This can cause build problems, as this software installs its own
     copies of iconv and libxml2 into directories that are picked up by
     other build systems.
+    EOS
+  end
+end
+
+def check_for_old_homebrew_share_python_in_path
+  s = ''
+  ['', '3'].map do |suffix|
+    if paths.include?((HOMEBREW_PREFIX/"share/python#{suffix}").to_s)
+      s += "#{HOMEBREW_PREFIX}/share/python#{suffix} is not needed in PATH.\n"
+    end
+  end
+  unless s.empty?
+    s += <<-EOS.undent
+      Formerly homebrew put Python scripts you installed via `pip` or `pip3`
+      (or `easy_install`) into that directory above but now it can be removed
+      from your PATH variable.
+      Python scripts will now install into #{HOMEBREW_PREFIX}/bin.
+      You can delete anything, except 'Extras', from the #{HOMEBREW_PREFIX}/share/python
+      (and #{HOMEBREW_PREFIX}/share/python3) dir and install affected Python packages
+      anew with `pip install --upgrade`.
     EOS
   end
 end

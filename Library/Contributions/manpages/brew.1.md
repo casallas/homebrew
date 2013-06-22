@@ -266,8 +266,8 @@ Note that these flags should only appear after a command.
     surrounded with slashes, then it is interpreted as a regular expression.
     If no search term is given, all available formula are displayed.
 
-  * `search --macports`|`--fink` <text>:
-    Search for <text> on the MacPorts or Fink package search page.
+  * `search --macports`|`--fink`|`--debian` <text>:
+    Search for <text> in MacPorts, Fink or Debian's package list.
 
   * `sh [--env=std]`:
     Instantiate a Homebrew build environment. Uses our years-battle-hardened
@@ -334,7 +334,7 @@ Note that these flags should only appear after a command.
     spaces.
 
   * `--cache`:
-    Display Homebrew's download cache. *Default:* `~/Library/Caches/Homebrew`
+    Display Homebrew's download cache. See also `HOMEBREW_CACHE`.
 
   * `--cache` <formula>:
     Display the file or directory used to cache <formula>.
@@ -426,10 +426,9 @@ can take several different forms:
 
   * HOMEBREW\_CACHE:
     If set, instructs Homebrew to use the given directory as the download cache.
-    Otherwise, `~/Library/Caches/Homebrew` is used.
 
-    This can be used to keep downloads out of your home directory, if you have
-    it mounted on an SSD or are using FileVault for instance.
+    *Default:* `~/Library/Caches/Homebrew` if it exists; otherwise,
+    `/Library/Caches/Homebrew`.
 
   * HOMEBREW\_CURL\_VERBOSE:
     If set, Homebrew will pass `--verbose` when invoking `curl`(1).
