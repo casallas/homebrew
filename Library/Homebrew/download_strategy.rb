@@ -144,6 +144,11 @@ class CurlDownloadStrategy < AbstractDownloadStrategy
 
   private
 
+  def curl(*args)
+    args << '--connect-timeout' << '5' unless @mirrors.empty?
+    super
+  end
+
   def xzpath
     "#{HOMEBREW_PREFIX}/opt/xz/bin/xz"
   end
@@ -196,6 +201,13 @@ class CurlPostDownloadStrategy < CurlDownloadStrategy
   def _fetch
     base_url,data = @url.split('?')
     curl base_url, '-d', data, '-C', downloaded_size, '-o', @temporary_path
+  end
+end
+
+# Download from an SSL3-only host.
+class CurlSSL3DownloadStrategy < CurlDownloadStrategy
+  def _fetch
+    curl @url, '-3', '-C', downloaded_size, '-o', @temporary_path
   end
 end
 
@@ -724,6 +736,7 @@ class DownloadStrategyDetector
     when %r[^https?://(.+?\.)?googlecode\.com/hg] then MercurialDownloadStrategy
     when %r[^https?://(.+?\.)?googlecode\.com/svn] then SubversionDownloadStrategy
     when %r[^https?://(.+?\.)?sourceforge\.net/svnroot/] then SubversionDownloadStrategy
+    when %r[^https?://(.+?\.)?sourceforge\.net/hgweb/] then MercurialDownloadStrategy
     when %r[^http://svn.apache.org/repos/] then SubversionDownloadStrategy
     when %r[^http://www.apache.org/dyn/closer.cgi] then CurlApacheMirrorDownloadStrategy
       # Common URL patterns
@@ -744,6 +757,7 @@ class DownloadStrategyDetector
     when :hg then MercurialDownloadStrategy
     when :nounzip then NoUnzipCurlDownloadStrategy
     when :post then CurlPostDownloadStrategy
+    when :ssl3 then CurlSSL3DownloadStrategy
     when :svn then SubversionDownloadStrategy
     else
       raise "Unknown download strategy #{strategy} was requested."

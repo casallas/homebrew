@@ -99,7 +99,7 @@ class Pathname
 
   # we assume this pathname object is a file obviously
   def write content
-    raise "Will not overwrite #{to_s}" if exist? and not ARGV.force?
+    raise "Will not overwrite #{to_s}" if exist?
     dirname.mkpath
     File.open(self, 'w') {|f| f.write content }
   end
@@ -253,7 +253,12 @@ class Pathname
   end
 
   def resolved_path_exists?
-    (dirname+readlink).exist?
+    link = readlink
+  rescue ArgumentError
+    # The link target contains NUL bytes
+    false
+  else
+    (dirname+link).exist?
   end
 
   # perhaps confusingly, this Pathname object becomes the symlink pointing to
@@ -360,7 +365,7 @@ class Pathname
   def write_exec_script *targets
     targets.flatten!
     if targets.empty?
-      opoo "tried to write exec sripts to #{self} for an empty list of targets"
+      opoo "tried to write exec scripts to #{self} for an empty list of targets"
     end
     targets.each do |target|
       target = Pathname.new(target) # allow pathnames or strings
@@ -428,21 +433,36 @@ class Pathname
   end
 end
 
-# sets $n and $d so you can observe creation of stuff
 module ObserverPathnameExtension
+  class << self
+    attr_accessor :n, :d
+
+    def reset_counts!
+      @n = @d = 0
+    end
+
+    def total
+      n + d
+    end
+
+    def counts
+      [n, d]
+    end
+  end
+
   def unlink
     super
     puts "rm #{to_s}" if ARGV.verbose?
-    $n+=1
+    ObserverPathnameExtension.n += 1
   end
   def rmdir
     super
     puts "rmdir #{to_s}" if ARGV.verbose?
-    $d+=1
+    ObserverPathnameExtension.d += 1
   end
   def make_relative_symlink src
     super
-    $n+=1
+    ObserverPathnameExtension.n += 1
   end
   def install_info
     super
@@ -453,6 +473,3 @@ module ObserverPathnameExtension
     puts "uninfo #{to_s}" if ARGV.verbose?
   end
 end
-
-$n=0
-$d=0
