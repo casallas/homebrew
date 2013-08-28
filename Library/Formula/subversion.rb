@@ -7,9 +7,10 @@ class Subversion < Formula
   sha1 '45d227511507c5ed99e07f9d42677362c18b364c'
 
   bottle do
-    sha1 '4b8920c129cfc8adbf491a69d836a5a8f7455409' => :mountain_lion
-    sha1 'ee99dbd0f7b7d4abfdfc5d7a82a008d720713e47' => :lion
-    sha1 '733d68a8bfd92a64270fb67f0bc4cc0974602bf0' => :snow_leopard
+    revision 1
+    sha1 '22b10c1758441a42b7c2273e8e25d4354db48574' => :mountain_lion
+    sha1 'ecbfbc25e93fc1b2a4411dd64522903f21861ace' => :lion
+    sha1 '03f81ee8f7fb8a518dfce74b32443ebbe6f812d8' => :snow_leopard
   end
 
   option :universal
@@ -45,7 +46,7 @@ class Subversion < Formula
   end if build.include? 'perl' or build.include? 'ruby'
 
   def apr_bin
-    superbin or "/usr/bin"
+    Superenv.bin or "/usr/bin"
   end
 
   def install
@@ -122,11 +123,11 @@ class Subversion < Formula
     if build.include? 'perl'
       # Remove hard-coded ppc target, add appropriate ones
       if build.universal?
-        arches = "-arch x86_64 -arch i386"
+        arches = Hardware::CPU.universal_archs.as_arch_flags
       elsif MacOS.version <= :leopard
-        arches = "-arch i386"
+        arches = "-arch #{Hardware::CPU.arch_32_bit}"
       else
-        arches = "-arch x86_64"
+        arches = "-arch #{Hardware::CPU.arch_64_bit}"
       end
 
       perl_core = Pathname.new(`perl -MConfig -e 'print $Config{archlib}'`)+'CORE'

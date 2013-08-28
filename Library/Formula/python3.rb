@@ -6,13 +6,13 @@ require 'formula'
 # `brew install python`.
 
 class Setuptools < Formula
-  url 'https://pypi.python.org/packages/source/s/setuptools/setuptools-0.9.8.tar.gz'
-  sha1 'a13ad9411149c52501a15c702a4f3a3c757b5ba9'
+  url 'https://pypi.python.org/packages/source/s/setuptools/setuptools-1.1.tar.gz'
+  sha1 '0c789b38afa522605407515efb74a0278b867628'
 end
 
 class Pip < Formula
-  url 'https://pypi.python.org/packages/source/p/pip/pip-1.4.tar.gz'
-  sha1 '3149dc77c66b77d02497205fca5df56ae9d3e753'
+  url 'https://pypi.python.org/packages/source/p/pip/pip-1.4.1.tar.gz'
+  sha1 '9766254c7909af6d04739b4a7732cc29e9a48cb0'
 end
 
 class Python3 < Formula
@@ -36,6 +36,9 @@ class Python3 < Formula
   depends_on 'xz' => :recommended  # for the lzma module added in 3.3
   depends_on 'homebrew/dupes/tcl-tk' if build.with? 'brewed-tk'
   depends_on :x11 if build.with? 'brewed-tk' and Tab.for_name('tcl-tk').used_options.include?('with-x11')
+
+  skip_clean "bin/pip3", "bin/pip-#{VER}"
+  skip_clean "bin/easy_install3", "bin/easy_install-#{VER}"
 
   def patches
     DATA if build.with? 'brewed-tk'

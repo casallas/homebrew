@@ -1,14 +1,14 @@
 require 'formula'
 
 class LeiningenJar < Formula
-  url 'https://leiningen.s3.amazonaws.com/downloads/leiningen-2.3.0-standalone.jar', :using => :nounzip
-  sha1 '17d7347a8bee5ee34c6191ded0af0f8d6b348319'
+  url 'https://leiningen.s3.amazonaws.com/downloads/leiningen-2.3.2-standalone.jar'
+  sha1 'ed6f93be75c796408544042cfd26699d45b49725'
 end
 
 class Leiningen < Formula
   homepage 'https://github.com/technomancy/leiningen'
-  url 'https://github.com/technomancy/leiningen/archive/2.3.0.tar.gz'
-  sha1 'f19921fb05b5313a6ea654602e015ca9ed8ece9b'
+  url 'https://github.com/technomancy/leiningen/archive/2.3.2.tar.gz'
+  sha1 '3a5b319c14ce05e010fd2641db17047b7ad607ef'
 
   head 'https://github.com/technomancy/leiningen.git'
 
@@ -26,6 +26,7 @@ class Leiningen < Formula
   def caveats; <<-EOS.undent
     Dependencies will be installed to:
       $HOME/.m2/repository
+    To play around with Clojure run `lein repl` or `lein help`.
     EOS
   end
 end
