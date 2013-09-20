@@ -2,8 +2,9 @@ require 'formula'
 
 class Vim < Formula
   homepage 'http://www.vim.org/'
-  url 'https://vim.googlecode.com/hg/', :tag => 'v7-4-027'
-  version '7.4.027'
+  # This package tracks debian-unstable: http://packages.debian.org/unstable/vim
+  url 'http://ftp.de.debian.org/debian/pool/main/v/vim/vim_7.4.027.orig.tar.gz'
+  sha1 '8d78c0cf545bf75cbcd5e3b709a7d03a568d256e'
 
   head 'https://vim.googlecode.com/hg/'
 
