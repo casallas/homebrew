@@ -182,6 +182,12 @@ class BuildError < Homebrew::InstallationError
     if not ARGV.verbose?
       puts
       puts "#{Tty.red}READ THIS#{Tty.reset}: #{Tty.em}#{ISSUES_URL}#{Tty.reset}"
+      if formula.tap?
+        user, repo = formula.tap.split '/'
+        tap_issues_url = "https://github.com/#{user}/homebrew-#{repo}/issues"
+        puts "If reporting this issue please do so at (not mxcl/homebrew):"
+        puts "  #{tap_issues_url}"
+      end
     else
       require 'cmd/--config'
       require 'cmd/--env'
@@ -197,7 +203,7 @@ class BuildError < Homebrew::InstallationError
       Homebrew.dump_build_env(env)
       puts
       onoe "#{formula.name} did not build"
-      unless (logs = Dir["#{ENV['HOME']}/Library/Logs/Homebrew/#{formula}/*"]).empty?
+      unless (logs = Dir["#{HOMEBREW_LOGS}/#{formula}/*"]).empty?
         puts "Logs:"
         puts logs.map{|fn| "     #{fn}"}.join("\n")
       end

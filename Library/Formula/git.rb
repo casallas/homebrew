@@ -2,36 +2,37 @@ require 'formula'
 
 class Git < Formula
   homepage 'http://git-scm.com'
-  url 'http://git-core.googlecode.com/files/git-1.8.4.1.tar.gz'
-  sha1 '49004a8dfcbb7c0848147737d9877fd7313a42ec'
+  url 'http://git-core.googlecode.com/files/git-1.8.4.3.tar.gz'
+  sha1 '43b1edc95b3ab77f9739d789b906ded0585fe7a2'
   head 'https://github.com/git/git.git'
 
   bottle do
-    revision 1
-    sha1 '59105495ca5b2b980ba6095e9acf8255a1f0ab9a' => :mavericks
-    sha1 'c18ce99ea5d351fcdc717a9e05e6a43c2b0bae89' => :mountain_lion
-    sha1 'b6c7c9f472a2d50361c4575eab82e1ae5e74a74f' => :lion
+    sha1 'ff5dc5105e0a56bf016139ae0c6dda12f4234c32' => :mavericks
+    sha1 'd2c663ea9922ab16b5e789e461aa62d2e0cb1072' => :mountain_lion
+    sha1 'd88e30d0f7fe799c4baf62aef544b3c5d96be9e6' => :lion
   end
 
   option 'with-blk-sha1', 'Compile with the block-optimized SHA1 implementation'
   option 'without-completions', 'Disable bash/zsh completions from "contrib" directory'
   option 'with-brewed-openssl', "Build with Homebrew OpenSSL instead of the system version"
   option 'with-brewed-curl', "Use Homebrew's version of cURL library"
+  option 'with-persistent-https', 'Build git-remote-persistent-https from "contrib" directory'
 
   depends_on :python
   depends_on 'pcre' => :optional
   depends_on 'gettext' => :optional
   depends_on 'openssl' if build.with? 'brewed-openssl'
   depends_on 'curl' => 'with-darwinssl' if build.with? 'brewed-curl'
+  depends_on 'go' => :build if build.with? 'persistent-https'
 
   resource 'man' do
-    url 'http://git-core.googlecode.com/files/git-manpages-1.8.4.1.tar.gz'
-    sha1 'dc0f9de1cacc8912f131b67dc5a19a96768ecc95'
+    url 'http://git-core.googlecode.com/files/git-manpages-1.8.4.3.tar.gz'
+    sha1 '3a7e9322a95e0743b902152083366fe97f322ab1'
   end
 
   resource 'html' do
-    url 'http://git-core.googlecode.com/files/git-htmldocs-1.8.4.1.tar.gz'
-    sha1 '1f0e5c5934ec333b5630a8c93a0fb0b1895dfcb8'
+    url 'http://git-core.googlecode.com/files/git-htmldocs-1.8.4.3.tar.gz'
+    sha1 'eb4eb4991464f44deda19d1435d9721146587661'
   end
 
   def install
@@ -78,6 +79,15 @@ class Git < Formula
                      "CFLAGS=#{ENV.cflags}",
                      "LDFLAGS=#{ENV.ldflags}"
       bin.install 'git-subtree'
+    end
+
+    if build.with? 'persistent-https'
+      cd 'contrib/persistent-https' do
+        system "make"
+        bin.install 'git-remote-persistent-http',
+                    'git-remote-persistent-https',
+                    'git-remote-persistent-https--proxy'
+      end
     end
 
     unless build.without? 'completions'

@@ -86,7 +86,7 @@ class Wine < Formula
 
   def wine_wrapper; <<-EOS.undent
     #!/bin/sh
-    DYLD_FALLBACK_LIBRARY_PATH="#{MacOS::X11.lib}:#{HOMEBREW_PREFIX}/lib:/usr/lib" "#{bin}/wine.bin" "$@"
+    DYLD_FALLBACK_LIBRARY_PATH="#{library_path}" "#{bin}/wine.bin" "$@"
     EOS
   end
 
@@ -98,11 +98,11 @@ class Wine < Formula
     ENV.append "LDFLAGS", build32
 
     # The clang that comes with Xcode 5 no longer miscompiles wine. Tested with 1.7.3.
-    if ENV.compiler == :clang and Compiler.new(:clang).build < 500
+    if ENV.compiler == :clang and MacOS.clang_build_version < 500
       opoo <<-EOS.undent
-        Clang currently miscompiles some parts of Wine. If you have gcc, you
-        can get a more stable build with:
-          brew install wine --use-gcc
+        Clang currently miscompiles some parts of Wine.
+        If you have GCC, you can get a more stable build with:
+          brew install wine --cc=gcc-4.2 # or 4.7, 4.8, etc.
       EOS
     end
 
@@ -170,5 +170,14 @@ class Wine < Formula
       EOS
     end
     return s
+  end
+
+  private
+
+  def library_path
+    paths = ["#{HOMEBREW_PREFIX}/lib", '/usr/lib']
+    paths.unshift(MacOS::X11.lib) unless build.without? 'x11'
+
+    paths.join(':')
   end
 end

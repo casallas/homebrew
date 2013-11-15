@@ -9,8 +9,8 @@ class Pypy < Formula
   depends_on :arch => :x86_64
 
   resource 'setuptools' do
-    url 'https://pypi.python.org/packages/source/s/setuptools/setuptools-1.1.6.tar.gz'
-    sha1 '4a8863e8196704759a5800afbcf33a94b802ac88'
+    url 'https://pypi.python.org/packages/source/s/setuptools/setuptools-1.3.2.tar.gz'
+    sha1 '77180132225c5b4696e6d061655e291f3d1b20f5'
   end
 
   resource 'pip' do
@@ -26,6 +26,8 @@ class Pypy < Formula
     # we want to avoid putting PyPy's Python.h somewhere that configure
     # scripts will find it.
     libexec.install Dir['*']
+    bin.mkpath
+    ln_s libexec/'bin/pypy', bin/'pypy'
 
     # Post-install, fix up the site-packages and install-scripts folders
     # so that user-installed Python software survives minor updates, such

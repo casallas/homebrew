@@ -85,7 +85,7 @@ class PythonDependency < Requirement
       ENV['PYTHONPATH'] = nil
       @unsatisfied_because = ''
       if binary.nil? || !binary.executable?
-        @unsatisfied_because += "No `#{@python}` found in your PATH! Consider to `brew install #{@python}`."
+        @unsatisfied_because += "No `#{@python}` found in your PATH. To install with Homebrew use `brew install #{@python}`."
         false
       elsif pypy?
         @unsatisfied_because += "Your #{@python} executable appears to be a PyPy, which is not supported."
@@ -97,7 +97,7 @@ class PythonDependency < Requirement
         @unsatisfied_because += "Python version #{version} is too old (need at least #{@min_version})."
         false
       elsif @min_version.major == 2 && `python -c "import sys; print(sys.version_info[0])"`.strip == "3"
-        @unsatisfied_because += "Your `python` points to a Python 3.x. This is not supported."
+        @unsatisfied_because += "Your `python` points to Python 3.x; this is not supported."
         false
       else
         @imports.keys.all? do |module_name|
@@ -142,8 +142,8 @@ class PythonDependency < Requirement
     if brewed?
       # Homebrew since a long while only supports frameworked python
       HOMEBREW_PREFIX/"opt/#{python}/Frameworks/Python.framework/Versions/#{version.major}.#{version.minor}"
-    elsif from_osx?
-      # Python on OS X has been stripped off its includes (unless you install the CLT), therefore we use the MacOS.sdk.
+    elsif from_osx? and MacOS.version < :mavericks
+      # Python on OS X before Mavericks has been stripped off its includes (unless you install the CLT), therefore we use the MacOS.sdk.
       Pathname.new("#{MacOS.sdk_path}/System/Library/Frameworks/Python.framework/Versions/#{version.major}.#{version.minor}")
     else
       # What Python knows about itself
