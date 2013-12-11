@@ -1,5 +1,8 @@
 Homebrew Linux Port
 ===================
+
+*Note*: There is a more official (and more recent) Linux port of Homebrew here: https://github.com/Homebrew/linuxbrew
+
 This is the Linux port of Homebrew.
 
 Initially done by Sergio Rubio, continued by Juan Sebastian Casallas.
