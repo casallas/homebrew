@@ -23,6 +23,8 @@ class Vrpn < Formula
   end
 
   def install
+    ENV.libstdcxx
+
     args = std_cmake_args
 
     if build.include? 'clients'

@@ -2,13 +2,13 @@ require "formula"
 
 class Influxdb < Formula
   homepage "http://influxdb.org"
-  url "http://get.influxdb.org/influxdb-0.4.1.src.tar.gz"
-  sha1 "f452cfce6e08f56e0fd6071d2a127446c165e08b"
+  url "http://get.influxdb.org/influxdb-0.5.0.src.tar.gz"
+  sha1 "5e80739c3d11a7b1d5c6154af25a4d5b3c91b8cb"
 
   bottle do
-    sha1 "90d21ae22304b058954ce5deaba6b3f9c77eb16c" => :mavericks
-    sha1 "d38c2781c2f81cb2ad5ad12e8789d511235ec908" => :mountain_lion
-    sha1 "be6df288b6d385c27e48ba221a12970be0eb0beb" => :lion
+    sha1 "5f98b324f4ac6dc54381f266f47cf89da696b518" => :mavericks
+    sha1 "b14fd92bdb4f0957e12c72b62a72f787a75a91e5" => :mountain_lion
+    sha1 "9d3f0ceb4db3fc3ac733c2e3cb45534d6f5bcd80" => :lion
   end
 
   depends_on "leveldb"
@@ -20,8 +20,8 @@ class Influxdb < Formula
   def install
     ENV["GOPATH"] = buildpath
 
-    flex = Formula.factory("flex").bin/"flex"
-    bison = Formula.factory("bison").bin/"bison"
+    flex = Formula["flex"].bin/"flex"
+    bison = Formula["bison"].bin/"bison"
 
     system "./configure", "--with-flex=#{flex}", "--with-bison=#{bison}"
     system "make", "dependencies", "protobuf", "parser"
@@ -30,7 +30,8 @@ class Influxdb < Formula
     inreplace "config.toml.sample" do |s|
       s.gsub! "/tmp/influxdb/development/db", "#{var}/influxdb/data"
       s.gsub! "/tmp/influxdb/development/raft", "#{var}/influxdb/raft"
-      s.gsub! "./admin", "#{opt_prefix}/share/admin"
+      s.gsub! "/tmp/influxdb/development/wal", "#{var}/influxdb/wal"
+      s.gsub! "./admin", "#{opt_share}/admin"
     end
 
     bin.install "daemon" => "influxdb"
@@ -57,7 +58,7 @@ class Influxdb < Formula
         <string>#{plist_name}</string>
         <key>ProgramArguments</key>
         <array>
-          <string>#{opt_prefix}/bin/influxdb</string>
+          <string>#{opt_bin}/influxdb</string>
           <string>-config=#{etc}/influxdb.conf</string>
         </array>
         <key>RunAtLoad</key>

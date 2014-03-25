@@ -12,10 +12,9 @@ class Phantomjs < Formula
     sha1 "575af708d7e5ef6e39e90766ffd2bf97b6c4b51b" => :lion
   end
 
-  def patches
-    [
-      'https://github.com/ariya/phantomjs/commit/fe6a96.patch'
-    ]
+  patch do
+    url "https://github.com/ariya/phantomjs/commit/fe6a96.patch"
+    sha1 "c6899db754a7202fc4745d2bd64504432a6b606c"
   end
 
   def install
@@ -27,5 +26,17 @@ class Phantomjs < Formula
     system './build.sh', *args
     bin.install 'bin/phantomjs'
     (share+'phantomjs').install 'examples'
+  end
+
+  test do
+    path = testpath/"test.js"
+    path.write <<-EOS
+      console.log('hello');
+      phantom.exit();
+    EOS
+
+    output = `#{bin}/phantomjs #{path}`.strip
+    assert_equal "hello", output
+    assert_equal 0, $?.exitstatus
   end
 end

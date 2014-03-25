@@ -11,9 +11,10 @@ class Cfengine < Formula
   depends_on 'tokyo-cabinet'
   depends_on 'libxml2' if MacOS.version < :mountain_lion
 
-  def patches
-    # Upstream patches for OS X compilation
-    %w{https://github.com/cfengine/core/commit/d03fcc2d38a4db0c79386aaef30597102bf45853.patch}
+  # Upstream patches for OS X compilation
+  patch do
+    url "https://github.com/cfengine/core/commit/d03fcc2d38a4db0c79386aaef30597102bf45853.patch"
+    sha1 "99c043fc158f790fa8cc327ffa1ebcc36deb6470"
   end
 
   def install
@@ -21,13 +22,13 @@ class Cfengine < Formula
                           "--prefix=#{prefix}",
                           "--with-workdir=#{var}/cfengine",
                           "--with-tokyocabinet",
-                          "--with-pcre=#{Formula.factory('pcre').opt_prefix}",
+                          "--with-pcre=#{Formula['pcre'].opt_prefix}",
                           "--without-mysql",
                           "--without-postgresql"
     system "make install"
   end
 
-  def test
+  test do
     system "#{bin}/cf-agent", "-V"
   end
 end

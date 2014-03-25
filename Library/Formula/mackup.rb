@@ -2,8 +2,8 @@ require 'formula'
 
 class Mackup < Formula
   homepage 'https://github.com/lra/mackup'
-  url 'https://github.com/lra/mackup/archive/0.6.tar.gz'
-  sha1 '29526abfc45dfc04e865e06485aac886306b377f'
+  url 'https://github.com/lra/mackup/archive/0.7.1.tar.gz'
+  sha1 'e09606708d9a61dfa5e574b789f4f858ad7fe2e2'
 
   head 'https://github.com/lra/mackup.git'
 
@@ -13,7 +13,7 @@ class Mackup < Formula
     system 'python', 'setup.py', 'install', "--prefix=#{prefix}"
   end
 
-  def test
-    system "#{bin}/mackup", '-h'
+  test do
+    system "#{bin}/mackup", '--help'
   end
 end

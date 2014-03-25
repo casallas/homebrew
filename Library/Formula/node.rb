@@ -1,6 +1,6 @@
 require 'formula'
 
-class NpmNotInstalled < Requirement
+class NpmRequirement < Requirement
   fatal true
 
   def modules_folder
@@ -32,20 +32,21 @@ end
 # Note that x.even are stable releases, x.odd are devel releases
 class Node < Formula
   homepage 'http://nodejs.org/'
-  url 'http://nodejs.org/dist/v0.10.25/node-v0.10.25.tar.gz'
-  sha1 '1e330b4fbb6f7bb858a0b37d8573dd4956f40885'
+  url 'http://nodejs.org/dist/v0.10.26/node-v0.10.26.tar.gz'
+  sha1 '2340ec2dce1794f1ca1c685b56840dd515a271b2'
 
   devel do
-    url 'http://nodejs.org/dist/v0.11.11/node-v0.11.11.tar.gz'
-    sha1 '65b257ec6584bf339f06f58a8a02ba024e13f283'
+    url 'http://nodejs.org/dist/v0.11.12/node-v0.11.12.tar.gz'
+    sha1 'd991057af05dd70feb2126469ce279a2fe869e86'
   end
 
   head 'https://github.com/joyent/node.git'
 
   option 'enable-debug', 'Build with debugger hooks'
   option 'without-npm', 'npm will not be installed'
+  option 'without-completion', 'npm bash completion will not be installed'
 
-  depends_on NpmNotInstalled unless build.without? 'npm'
+  depends_on NpmRequirement => :recommended
   depends_on :python
 
   fails_with :llvm do
@@ -56,20 +57,23 @@ class Node < Formula
     args = %W{--prefix=#{prefix}}
 
     args << "--debug" if build.include? 'enable-debug'
-    args << "--without-npm" if build.include? 'without-npm'
+    args << "--without-npm" if build.without? "npm"
 
     system "./configure", *args
     system "make install"
 
-    unless build.include? 'without-npm'
+    if build.with? "npm"
       (lib/"node_modules/npm/npmrc").write("prefix = #{npm_prefix}\n")
 
       # Link npm manpages
       Pathname.glob("#{lib}/node_modules/npm/man/*").each do |man|
         dir = send(man.basename)
-        man.children.each do |file|
-          dir.install_symlink(file.relative_path_from(dir))
-        end
+        man.children.each { |file| dir.install_symlink(file) }
+      end
+
+      if build.with? "completion"
+        bash_completion.install_symlink \
+          lib/"node_modules/npm/lib/utils/completion.sh" => "npm"
       end
     end
   end
@@ -84,7 +88,7 @@ class Node < Formula
   end
 
   def caveats
-    if build.include? 'without-npm' then <<-end.undent
+    if build.without? "npm"; <<-end.undent
       Homebrew has NOT installed npm. If you later install it, you should supplement
       your NODE_PATH with the npm module folder:
           #{npm_prefix}/lib/node_modules
@@ -94,5 +98,14 @@ class Node < Formula
           #{npm_prefix}/bin
       end
     end
+  end
+
+  test do
+    path = testpath/"test.js"
+    path.write "console.log('hello');"
+
+    output = `#{bin}/node #{path}`.strip
+    assert_equal "hello", output
+    assert_equal 0, $?.exitstatus
   end
 end
