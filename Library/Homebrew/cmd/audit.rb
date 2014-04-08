@@ -267,7 +267,7 @@ class FormulaAuditor
     end
 
     # Use new-style archive downloads
-    urls.select { |u| u =~ %r[https://.*/(?:tar|zip)ball/] && u !~ %r[\.git$] }.each do |u|
+    urls.select { |u| u =~ %r[https://.*github.*/(?:tar|zip)ball/] && u !~ %r[\.git$] }.each do |u|
       problem "Use /archive/ URLs for GitHub tarballs (url is #{u})."
     end
 
@@ -332,7 +332,7 @@ class FormulaAuditor
     end
   end
 
-  def audit_line(line)
+  def audit_line(line, lineno)
     if line =~ /<(Formula|AmazonWebServicesFormula|ScriptFileFormula|GithubGistFormula)/
       problem "Use a space in class inheritance: class Foo < #{$1}"
     end
@@ -410,7 +410,7 @@ class FormulaAuditor
 
     # No trailing whitespace, please
     if line =~ /[\t ]+$/
-      problem "Trailing whitespace was found"
+      problem "#{lineno}: Trailing whitespace was found"
     end
 
     if line =~ /if\s+ARGV\.include\?\s+'--(HEAD|devel)'/
@@ -521,6 +521,10 @@ class FormulaAuditor
     if line =~ /depends_on ['"](.+)['"] (if.+|unless.+)$/
       audit_conditional_dep($1, $2, $&)
     end
+
+    if line =~ /(Dir\[("[^\*{},]+")\])/
+      problem "#{$1} is unnecessary; just use #{$2}"
+    end
   end
 
   def audit_conditional_dep(dep, condition, line)
@@ -564,7 +568,7 @@ class FormulaAuditor
     audit_conflicts
     audit_patches
     audit_text
-    text.each_line { |line| audit_line(line) }
+    text.split("\n").each_with_index { |line, lineno| audit_line(line, lineno) }
     audit_installed
   end
 

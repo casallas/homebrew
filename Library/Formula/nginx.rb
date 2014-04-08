@@ -6,8 +6,8 @@ class Nginx < Formula
   sha1 'e13b5b23f9be908b69652b0c394a95e9029687e3'
 
   devel do
-    url 'http://nginx.org/download/nginx-1.5.12.tar.gz'
-    sha1 '7b298d4eff54041920c233df5c52ec429af11ccd'
+    url 'http://nginx.org/download/nginx-1.5.13.tar.gz'
+    sha1 'f0ee0d2545978c8cf5ca3a5e70fcd6b27c4f6191'
   end
 
   head 'http://hg.nginx.org/nginx/', :using => :hg
@@ -86,31 +86,31 @@ class Nginx < Formula
     system "make install"
     man8.install "objs/nginx.8"
     (var/'run/nginx').mkpath
+  end
 
+  def post_install
     # nginx's docroot is #{prefix}/html, this isn't useful, so we symlink it
     # to #{HOMEBREW_PREFIX}/var/www. The reason we symlink instead of patching
     # is so the user can redirect it easily to something else if they choose.
-    prefix.cd do
-      dst = HOMEBREW_PREFIX/"var/www"
-      if not dst.exist?
-        dst.dirname.mkpath
-        mv "html", dst
-      else
-        rm_rf "html"
-        dst.mkpath
-      end
-      Pathname.new("#{prefix}/html").make_relative_symlink(dst)
+    html = prefix/"html"
+    dst  = var/"www"
+
+    if dst.exist?
+      html.rmtree
+      dst.mkpath
+    else
+      dst.dirname.mkpath
+      html.rename(dst)
     end
+
+    prefix.install_symlink dst => "html"
 
     # for most of this formula's life the binary has been placed in sbin
     # and Homebrew used to suggest the user copy the plist for nginx to their
     # ~/Library/LaunchAgents directory. So we need to have a symlink there
     # for such cases
-    if (HOMEBREW_CELLAR/'nginx').subdirs.any?{|d| (d/:sbin).directory? }
-      sbin.mkpath
-      sbin.cd do
-        (sbin/'nginx').make_relative_symlink(bin/'nginx')
-      end
+    if rack.subdirs.any? { |d| (d/:sbin).directory? }
+      sbin.install_symlink bin/"nginx"
     end
   end
 
