@@ -2,11 +2,9 @@ module Homebrew extend self
 
   def tap
     if ARGV.empty?
-      tapd = HOMEBREW_LIBRARY/"Taps"
-      tapd.children.each do |tap|
-        # only replace the *last* dash: yes, tap filenames suck
-        puts tap.basename.to_s.reverse.sub('-', '/').reverse if (tap/'.git').directory?
-      end if tapd.directory?
+      each_tap do |user, repo|
+        puts "#{user.basename}/#{repo.basename.sub("homebrew-", "")}" if (repo/".git").directory?
+      end
     elsif ARGV.first == "--repair"
       repair_taps
     else
@@ -22,12 +20,12 @@ module Homebrew extend self
     user = "homebrew" if user == "Homebrew"
 
     # we downcase to avoid case-insensitive filesystem issues
-    tapd = HOMEBREW_LIBRARY/"Taps/#{user.downcase}-#{repo.downcase}"
+    tapd = HOMEBREW_LIBRARY/"Taps/#{user.downcase}/homebrew-#{repo.downcase}"
     return false if tapd.directory?
     abort unless system "git clone https://github.com/#{repouser}/homebrew-#{repo} #{tapd}"
 
     files = []
-    tapd.find_formula{ |file| files << tapd.basename.join(file) }
+    tapd.find_formula{ |file| files << tapd.dirname.basename.join(tapd.basename, file) }
     link_tap_formula(files)
     puts "Tapped #{files.length} formula"
 
@@ -48,26 +46,21 @@ module Homebrew extend self
     ignores = (HOMEBREW_LIBRARY/"Formula/.gitignore").read.split rescue []
     tapped = 0
 
-    cd HOMEBREW_LIBRARY/"Formula" do
-      formulae.each do |formula|
-        from = HOMEBREW_LIBRARY.join("Taps/#{formula}")
-        to = HOMEBREW_LIBRARY.join("Formula/#{formula.basename}")
+    formulae.each do |formula|
+      from = HOMEBREW_LIBRARY.join("Taps/#{formula}")
+      to = HOMEBREW_LIBRARY.join("Formula/#{formula.basename}")
 
-        # Unexpected, but possible, lets proceed as if nothing happened
-        to.delete if to.symlink? and to.realpath == from
+      # Unexpected, but possible, lets proceed as if nothing happened
+      to.delete if to.symlink? and to.realpath == from
 
-        # using the system ln is the only way to get relative symlinks
-        system "ln -s ../Taps/#{formula} 2>/dev/null"
-        if $?.success?
-          ignores << formula.basename.to_s
-          tapped += 1
-        else
-          to = to.realpath if to.exist?
-          # Whitelist gcc42 temporarily until Mavericks/Xcode 5.0 issues are resolved.
-          unless to.tap_ref == 'Homebrew/homebrew/apple-gcc42'
-            opoo "Could not tap #{Tty.white}#{from.tap_ref}#{Tty.reset} over #{Tty.white}#{to.tap_ref}#{Tty.reset}"
-          end
-        end
+      begin
+        to.make_relative_symlink(from)
+      rescue SystemCallError
+        to = to.realpath if to.exist?
+        opoo "Could not tap #{Tty.white}#{tap_ref(from)}#{Tty.reset} over #{Tty.white}#{tap_ref(to)}#{Tty.reset}"
+      else
+        ignores << formula.basename.to_s
+        tapped += 1
       end
     end
 
@@ -91,9 +84,9 @@ module Homebrew extend self
 
     count = 0
     # check symlinks are all set in each tap
-    HOMEBREW_REPOSITORY.join("Library/Taps").children.each do |tap|
+    each_tap do |user, repo|
       files = []
-      tap.find_formula{ |file| files << tap.basename.join(file) } if tap.directory?
+      repo.find_formula { |file| files << user.basename.join(repo.basename, file) }
       count += link_tap_formula(files)
     end
 
@@ -102,8 +95,20 @@ module Homebrew extend self
 
   private
 
+  def each_tap
+    taps = HOMEBREW_LIBRARY.join("Taps")
+
+    if taps.directory?
+      taps.subdirs.each do |user|
+        user.subdirs.each do |repo|
+          yield user, repo
+        end
+      end
+    end
+  end
+
   def tap_args
-    ARGV.first =~ %r{^(\S+)/(homebrew-)?(\w+)$}
+    ARGV.first =~ %r{^([\w_-]+)/(homebrew-)?([\w_-]+)$}
     raise "Invalid tap name" unless $1 && $3
     [$1, $3]
   end
@@ -115,13 +120,10 @@ module Homebrew extend self
   rescue GitHub::Error
     false
   end
-end
 
-
-class Pathname
-  def tap_ref
-    case self.to_s
-    when %r{^#{HOMEBREW_LIBRARY}/Taps/([a-z\-_]+)-(\w+)/(.+)}
+  def tap_ref(path)
+    case path.to_s
+    when %r{^#{HOMEBREW_LIBRARY}/Taps/([\w_-]+)/([\w_-]+)/(.+)}
       "#$1/#$2/#{File.basename($3, '.rb')}"
     when %r{^#{HOMEBREW_LIBRARY}/Formula/(.+)}
       "Homebrew/homebrew/#{File.basename($1, '.rb')}"
