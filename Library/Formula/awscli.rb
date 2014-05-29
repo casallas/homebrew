@@ -2,8 +2,8 @@ require "formula"
 
 class Awscli < Formula
   homepage "https://aws.amazon.com/cli/"
-  url "https://pypi.python.org/packages/source/a/awscli/awscli-1.3.7.tar.gz"
-  sha1 "35f5108e6dcdbc1a4615b99ccc34611da259cc25"
+  url "https://pypi.python.org/packages/source/a/awscli/awscli-1.3.11.tar.gz"
+  sha1 "18050c58ac8ce9553aed22ac0b8950df21d7c4fe"
 
   head do
     url "https://github.com/aws/aws-cli.git", :branch => :develop
@@ -21,11 +21,11 @@ class Awscli < Formula
     end
   end
 
-  depends_on :python
+  depends_on :python if MacOS.version <= :snow_leopard
 
   resource "botocore" do
-    url "https://pypi.python.org/packages/source/b/botocore/botocore-0.41.0.tar.gz"
-    sha1 "fc7fbaeeff0fda9a790fb76d8005a814bc0da19d"
+    url "https://pypi.python.org/packages/source/b/botocore/botocore-0.45.0.tar.gz"
+    sha1 "b3bcf0065458a3fd5c172701cd88614b05ef41eb"
   end
 
   resource "bcdoc" do
@@ -54,6 +54,7 @@ class Awscli < Formula
   end
 
   def install
+    ENV["PYTHONPATH"] = lib+"python2.7/site-packages"
     ENV.prepend_create_path "PYTHONPATH", libexec+"lib/python2.7/site-packages"
     install_args = [ "setup.py", "install", "--prefix=#{libexec}" ]
 

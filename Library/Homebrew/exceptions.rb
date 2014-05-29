@@ -164,10 +164,6 @@ class BuildError < Homebrew::InstallationError
     super formula, "Failed executing: #{command} #{args}"
   end
 
-  def was_running_configure?
-    @command == './configure'
-  end
-
   def issues
     @issues ||= fetch_issues
   end
@@ -185,12 +181,12 @@ class BuildError < Homebrew::InstallationError
       puts "#{Tty.red}READ THIS#{Tty.reset}: #{Tty.em}#{ISSUES_URL}#{Tty.reset}"
       if formula.tap?
         user, repo = formula.tap.split '/'
-        tap_issues_url = "https://github.com/#{user}/homebrew-#{repo}/issues"
+        tap_issues_url = "https://github.com/#{user}/#{repo}/issues"
         puts "If reporting this issue please do so at (not Homebrew/homebrew):"
         puts "  #{tap_issues_url}"
       end
     else
-      require 'cmd/--config'
+      require 'cmd/config'
       require 'cmd/--env'
 
       unless formula.core_formula?
