@@ -159,7 +159,7 @@ class FormulaInstaller
         @poured_bottle = true
 
         stdlibs = Keg.new(f.prefix).detect_cxx_stdlibs
-        stdlib_in_use = CxxStdlib.new(stdlibs.first, MacOS.default_compiler)
+        stdlib_in_use = CxxStdlib.create(stdlibs.first, MacOS.default_compiler)
         begin
           stdlib_in_use.check_dependencies(f, f.recursive_dependencies)
         rescue IncompatibleCxxStdlibs => e
@@ -239,9 +239,9 @@ class FormulaInstaller
     raise UnsatisfiedRequirements.new(f, fatals) unless fatals.empty?
   end
 
-  def install_requirement_default_formula?(req)
+  def install_requirement_default_formula?(req, build)
     return false unless req.default_formula?
-    return false if req.optional?
+    return false if build.without?(req)
     return true unless req.satisfied?
     pour_bottle? || build_bottle?
   end
@@ -262,7 +262,7 @@ class FormulaInstaller
           Requirement.prune
         elsif req.build? && dependent != f && install_bottle_for_dep?(dependent, build)
           Requirement.prune
-        elsif install_requirement_default_formula?(req)
+        elsif install_requirement_default_formula?(req, build)
           dep = req.to_dependency
           deps.unshift(dep)
           formulae.unshift(dep.to_formula)
@@ -316,8 +316,9 @@ class FormulaInstaller
 
   def inherited_options_for(dep)
     inherited_options = Options.new
-    if (options.include?("universal") || f.build.universal?) && !dep.build? && dep.to_formula.build.has_option?("universal")
-      inherited_options << Option.new("universal")
+    u = Option.new("universal")
+    if (options.include?(u) || f.build.universal?) && !dep.build? && dep.to_formula.option_defined?(u)
+      inherited_options << u
     end
     inherited_options
   end
@@ -460,7 +461,7 @@ class FormulaInstaller
     when f.devel then args << "--devel"
     end
 
-    f.build.each do |opt, _|
+    f.options.each do |opt|
       name  = opt.name[/\A(.+)=\z$/, 1]
       value = ARGV.value(name)
       args << "--#{name}=#{value}" if name && value
@@ -483,8 +484,6 @@ class FormulaInstaller
     # 1. formulae can modify ENV, so we must ensure that each
     #    installation has a pristine ENV when it starts, forking now is
     #    the easiest way to do this
-    # 2. formulae have access to __END__ the only way to allow this is
-    #    to make the formula script the executed script
     read, write = IO.pipe
     # I'm guessing this is not a good way to do this, but I'm no UNIX guru
     ENV['HOMEBREW_ERROR_PIPE'] = write.to_i.to_s
@@ -492,7 +491,7 @@ class FormulaInstaller
     args = %W[
       nice #{RUBY_PATH}
       -W0
-      -I #{File.dirname(__FILE__)}
+      -I #{HOMEBREW_LIBRARY_PATH}
       -rbuild
       --
       #{f.path}
@@ -516,8 +515,9 @@ class FormulaInstaller
 
     ignore_interrupts(:quietly) do # the child will receive the interrupt and marshal it back
       write.close
+      thr = Thread.new { read.read }
       Process.wait(pid)
-      data = read.read
+      data = thr.value
       read.close
       raise Marshal.load(data) unless data.nil? or data.empty?
       raise Interrupt if $?.exitstatus == 130

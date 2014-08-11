@@ -2,15 +2,16 @@ require 'formula'
 
 class Ansible < Formula
   homepage 'http://www.ansible.com/home'
-  url 'http://releases.ansible.com/ansible/ansible-1.6.8.tar.gz'
-  sha1 '9956256db37ef0408c898108f5190f5a501dff5c'
+  url 'http://releases.ansible.com/ansible/ansible-1.7.tar.gz'
+  sha1 'a9e3831cc2ad941b50dbf7bc12695834fc1bd25c'
 
   head 'https://github.com/ansible/ansible.git', :branch => 'devel'
 
   bottle do
-    sha1 "e791cb658bc61277f5b6ee852c2f8d75d7eb9793" => :mavericks
-    sha1 "72324ec4c9cdb6973e1f94988c731d86308e5a0b" => :mountain_lion
-    sha1 "c2f0505cc67544056d0147e1ab3a24ea4ced062e" => :lion
+    revision 1
+    sha1 "d3557e7f75eb603663b6e16837a79ad0ea123db1" => :mavericks
+    sha1 "8c3ccdb9de055ee035652d1ece1dae9de9b0026f" => :mountain_lion
+    sha1 "8b509e0222626d5facac6fbe8213d8f592048fa3" => :lion
   end
 
   depends_on :python if MacOS.version <= :snow_leopard
