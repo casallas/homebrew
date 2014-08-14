@@ -1,21 +1,13 @@
-require 'options'
-
 class BuildOptions
-  attr_accessor :args
   attr_accessor :universal
 
   def initialize(args, options)
-    @args = Options.coerce(args)
+    @args = args
     @options = options
   end
 
-  def initialize_copy(other)
-    super
-    @args = other.args.dup
-  end
-
   def include? name
-    args.include? '--' + name
+    @args.include?("--#{name}")
   end
 
   def with? val
@@ -72,11 +64,11 @@ class BuildOptions
   end
 
   def used_options
-    Options.new(@options & @args)
+    @options & @args
   end
 
   def unused_options
-    Options.new(@options - @args)
+    @options - @args
   end
 
   private
