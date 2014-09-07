@@ -11,7 +11,6 @@ def gist_logs f
       puts 'and then set HOMEBREW_GITHUB_API_TOKEN to use --new-issue option.'
       exit 1
     end
-    repo = repo_name(f)
   end
 
   files = load_logs(f.name)
@@ -22,7 +21,7 @@ def gist_logs f
   url = create_gist(files)
 
   if ARGV.include? '--new-issue'
-    url = new_issue(repo, "#{f.name} failed to build on #{MACOS_FULL_VERSION}", url)
+    url = new_issue(f.tap, "#{f.name} failed to build on #{MACOS_FULL_VERSION}", url)
   end
 
   ensure puts url if url
@@ -30,9 +29,10 @@ end
 
 def load_logs name
   logs = {}
-  dir = (HOMEBREW_LOGS/name)
+  dir = HOMEBREW_LOGS/name
   dir.children.sort.each do |file|
-    logs[file.basename.to_s] = {:content => (file.size == 0 ? "empty log" : file.read)}
+    contents = file.size? ? file.read : "empty log"
+    logs[file.basename.to_s] = { :content => contents }
   end if dir.exist?
   raise 'No logs.' if logs.empty?
   logs
@@ -49,11 +49,11 @@ def append_doctor files
 end
 
 def create_gist files
-  post('gists', {'public' => true, 'files' => files})['html_url']
+  post("/gists", "public" => true, "files" => files)["html_url"]
 end
 
 def new_issue repo, title, body
-  post("repos/#{repo}/issues", {'title' => title, 'body' => body})['html_url']
+  post("/repos/#{repo}/issues", "title" => title, "body" => body)["html_url"]
 end
 
 def http
@@ -71,7 +71,7 @@ def http
 end
 
 def post path, data
-  request = Net::HTTP::Post.new("/#{path}")
+  request = Net::HTTP::Post.new(path)
   request['User-Agent'] = HOMEBREW_USER_AGENT
   request['Content-Type'] = 'application/json'
   if HOMEBREW_GITHUB_API_TOKEN
@@ -96,15 +96,6 @@ class HTTP_Error < RuntimeError
   def initialize response
     super "HTTP #{response.code} #{response.message}"
   end
-end
-
-def repo_name f
-  dir = f.path.dirname
-  url = dir.cd { `git config --get remote.origin.url` }
-  unless url =~ %r{github.com(?:/|:)([\w\d]+)/([\-\w\d]+)}
-    raise 'Unable to determine formula repository.'
-  end
-  "#{$1}/#{$2}"
 end
 
 def usage

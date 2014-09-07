@@ -325,13 +325,16 @@ class Test
     return unless satisfied_requirements?(formula_object, :stable)
 
     installed_gcc = false
-    begin
-      deps = formula_object.stable.deps.to_a
-      if formula_object.devel && !ARGV.include?('--HEAD')
-        deps |= formula_object.devel.deps.to_a
-      end
-      deps.each {|f| CompilerSelector.new(f.to_formula).compiler }
+    deps = formula_object.stable.deps.to_a
+    reqs = formula_object.stable.requirements.to_a
+    if formula_object.devel && !ARGV.include?('--HEAD')
+      deps |= formula_object.devel.deps.to_a
+      reqs |= formula_object.devel.requirements.to_a
+    end
 
+
+    begin
+      deps.each {|f| CompilerSelector.new(f.to_formula).compiler }
       CompilerSelector.new(formula_object).compiler
     rescue CompilerSelectionError => e
       unless installed_gcc
@@ -343,6 +346,10 @@ class Test
       skip formula
       puts e.message
       return
+    end
+
+    if (deps | reqs).any? { |d| d.name == "mercurial" && d.build? }
+      test "brew", "install", "mercurial"
     end
 
     test "brew", "fetch", "--retry", *unchanged_dependencies unless unchanged_dependencies.empty?
