@@ -15,8 +15,10 @@ def gist_logs f
 
   files = load_logs(f.name)
 
-  append_config(files) if ARGV.include? '--config'
-  append_doctor(files) if ARGV.include? '--doctor'
+  s = StringIO.new
+  Homebrew.dump_verbose_config(s)
+  files["config.out"] = { :content => s.string }
+  files["doctor.out"] = { :content => `brew doctor 2>&1` }
 
   url = create_gist(files)
 
@@ -36,16 +38,6 @@ def load_logs name
   end if dir.exist?
   raise 'No logs.' if logs.empty?
   logs
-end
-
-def append_config files
-  s = StringIO.new
-  Homebrew.dump_verbose_config(s)
-  files["config.out"] = { :content => s.string }
-end
-
-def append_doctor files
-  files['doctor.out'] = {:content => `brew doctor 2>&1`}
 end
 
 def create_gist files
@@ -70,42 +62,45 @@ def http
   end
 end
 
-def post path, data
-  request = Net::HTTP::Post.new(path)
-  request['User-Agent'] = HOMEBREW_USER_AGENT
-  request['Content-Type'] = 'application/json'
+def make_request(path, data)
+  headers = {
+    "User-Agent"   => HOMEBREW_USER_AGENT,
+    "Accept"       => "application/vnd.github.v3+json",
+    "Content-Type" => "application/json",
+  }
+
   if HOMEBREW_GITHUB_API_TOKEN
-    request['Authorization'] = "token #{HOMEBREW_GITHUB_API_TOKEN}"
+    headers["Authorization"] = "token #{HOMEBREW_GITHUB_API_TOKEN}"
   end
+
+  request = Net::HTTP::Post.new(path, headers)
   request.body = Utils::JSON.dump(data)
-  response = http.request(request)
-  raise HTTP_Error, response if response.code != '201'
+  request
+end
 
-  if !response.body.respond_to?(:force_encoding)
-    body = response.body
-  elsif response["Content-Type"].downcase == "application/json; charset=utf-8"
-    body = response.body.dup.force_encoding(Encoding::UTF_8)
+def post(path, data)
+  request = make_request(path, data)
+
+  case response = http.request(request)
+  when Net::HTTPCreated
+    Utils::JSON.load get_body(response)
   else
-    body = response.body.encode(Encoding::UTF_8, :undef => :replace)
-  end
-
-  Utils::JSON.load(body)
-end
-
-class HTTP_Error < RuntimeError
-  def initialize response
-    super "HTTP #{response.code} #{response.message}"
+    raise "HTTP #{response.code} #{response.message} (expected 201)"
   end
 end
 
-def usage
-  puts "usage: brew gist-logs [options] <formula>"
-  puts
-  puts "options: --config, --doctor, --new-issue"
+def get_body(response)
+  if !response.body.respond_to?(:force_encoding)
+    response.body
+  elsif response["Content-Type"].downcase == "application/json; charset=utf-8"
+    response.body.dup.force_encoding(Encoding::UTF_8)
+  else
+    response.body.encode(Encoding::UTF_8, :undef => :replace)
+  end
 end
 
 if ARGV.formulae.length != 1
-  usage
+  puts "usage: brew gist-logs [--new-issue] <formula>"
   exit 1
 end
 
